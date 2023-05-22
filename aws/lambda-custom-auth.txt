@@ -1,0 +1,108 @@
+... building REST APIs with AWS Lambda and API Gateway...
+..These tools help them iterate quickly without having to worry about infrastructure.
+... Custom authorizers are a feature provided by API Gateway to separate your auth logic from the business logic in your function
+
+.. API GTW Authorizer are Lambda functions that are called before your main function (end final service) to authenticate and/or authorize that the caller may proceed to your core function
+
+... Main benefits,
+
+	1. to centralize your auth logic in a single function rather than packaging it up as a library into each of your functions
+	2. to cache responses. using something like a JWT, your auth logic will need to make a remote call, By isolating the remote call in your custom authorizer, you will only need to pay the price once
+
+... Main drawbacks
+
+
+	1. and you should only use them if you really need them....
+
+	(How to reduce this cost)
+	 ...biggest cost of a custom authorizer is that there is the added latency in your API Gateway calls, cold start here never, ever must be a problem, you could be paying this penalty twice (on the custom authorizer, on your core function.), ok we haven't cold start issue, but... you're still adding an additional network hop, with the associated processing time, to your request flow (Identity Service have a high latency????), Yes? how can I mitigate this problems, Caching Strategy etc?
+
+	 2. every endpoint that uses a custom authorizer must include authorization information, e.g; API endpoint where unauthenticated users can request information about a particular resource, e.g FAC FaaS, we need a workaround for this,
+
+	 3. Yes must be the answer for at least one
+
+	 	. Do I have expensive auth logic that I would like to cache independently of my function?
+	 	. Do I have auth logic contained in multiple, separately-deployable units?
+	 	. Using API Gateway as a proxy to other AWS resources?
+
+
+... What is a custom auth
+
+.... custom authorizer is a Lambda function that you write. Because you are writing the function, you have significant flexibility on the logic in your authorizer, can use custom authorizer to verify a JWT token, check SAML assertions, validate sessions stored in DynamoDB, or even hit an internal server for authentication information.
+
+
+.. We will classify as
+
+	- two types of custom authorizers: TOKEN and REQUEST.
+
+
+    TOKEN is more simply option, REQUEST is more complex and can be helpful or it can be overkill -- it depends the situation.
+
+
+Custom authorizer responses
+
+Basically we have two ways
+
+    1. Deny the request based on the provided identification, or
+    2. Allow the request and let the request proceed to the backing resource.
+
+    Sample of a possible deny
+
+    {
+        "principalId": "my-username",
+        "policyDocument": {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Action": "execute-api:Invoke",
+                    "Effect": "Deny",
+                    "Resource": "arn:aws:execute-api:sa-east-1:123456789012:qsxrty/test/GET/mydemoresource"
+            ]
+        },
+    }
+
+
+    Sample of a possibly allow
+
+    {
+      "principalId": "my-username",
+      "policyDocument": {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Action": "execute-api:Invoke",
+            "Effect": "Allow",
+            "Resource": "arn:aws:execute-api:sa-east-1:123456789012:qsxrty/test/GET/mydemoresource"
+          }
+        ]
+      },
+      "context": {
+        "org": "my-org",
+        "role": "admin",
+        "createdAt": "2019-01-03T12:15:42"
+      }
+    }
+
+
+
+    Principal Id
+
+    The principalId is a required property on your authorizer response. It represents the principal identifier for the caller. This may vary from application-to-application, but it could be a username, an email address, or a unique ID.
+
+    Policy Document
+
+    The policyDocument is another required property and the core of the authorizer response. You must return a valid IAM policy that allows access to the underlying API Gateway resource that the user is trying to access.
+
+    IAM policies is a can of worms in itself, but you can use custom authorizers even if you understand only the basics. Essentially, you need to produce an object that allows the caller to perform a specific action (execute-api:Invoke). Finally, you need to specify the resource on which they are allowed to perform this action.
+
+
+    "Statement": [
+        {
+            "Action": "execute-api:Invoke", // <-- What action they can take.
+            "Effect": "Allow", // <-- Allow the action
+            "Resource": "arn:aws:execute-api:us-east-1:123456789012:qsxrty/test/GET/mydemoresource" // <-- The resource on which they can perform this action
+    ]
+
+
+    Use a cache, TOKEN use a header, but for REQUEST must be choose a property
+    .. Must valid the better approach

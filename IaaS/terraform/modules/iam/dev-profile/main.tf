@@ -1,3 +1,4 @@
+# https://github.com/clouddrove/terraform-aws-iam-user/blob/master/main.tf
 provider "aws" {
   region = var.region
 }
@@ -6,8 +7,8 @@ resource "aws_iam_user" "dev_profile" {
   name = var.dev_name
 }
 
+# aws_iam_account_password_policy
 # aws_iam_user_login_profile (To Mange PWD)
-
 resource "aws_iam_access_key" "dev_profile_access_key" {
   user = aws_iam_user.dev_profile.name
   #pgp_key = var.pgp_key
@@ -44,7 +45,19 @@ resource "aws_iam_policy" "dev_profile_policies" {
         Resource = "arn:aws:ec2:::id"
       },
       /*
-      # Admin Profile
+      {
+        "Action" : [
+          "iam:GenerateCredentialReport",
+          "iam:GenerateServiceLastAccessedDetails",
+          "iam:Get*",
+          "iam:List*",
+          "iam:SimulateCustomPolicy",
+          "iam:SimulatePrincipalPolicy"
+        ],
+        "Effect" : "Allow",
+        "Resource" : "*"
+      },
+      # Admin Profile Policy
       Action = [
         Effect = "Allow"
         Action = "*"

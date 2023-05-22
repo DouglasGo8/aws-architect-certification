@@ -13,13 +13,12 @@
 - https://camel.apache.org/camel-quarkus/next/index.html[Camel Ext4Quarkus]
 - https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services[Region Service Table]
 
-
 == Associated Certification
 
 === Concepts
 
 .AWS Timeline
-image::thumbs/aws_history_timeline.png[]
+image::thumbs/images/aws_history_timeline.png[]
 
 . AWS enables you to build sophisticated and scalable applications
 . How to choose AWS Regions: its depends
@@ -45,9 +44,98 @@ image::thumbs/aws_history_timeline.png[]
 
 * Users are people within an organization, and must be grouped
 * Groups only contain users, not other groups
+* MFA is a combination of password with security device you own
 
+.Lambda Authorizer Concept
+image::thumbs/images/lambda_authorizer.png[]
 
+.Sample use S3 API using AWS CLI
+[source,bash]
+----
+aws s3api list-buckets
+----
 
+* IAM Roles for Services, assign permissions to AWS Services with IAM Roles, e.g some EC2 instance needs access Lambda
+
+* Quick summary for IAM
+
+- Users: mapped to a physical user, has a password for AWS Console
+- Groups: contains only users
+- Policies: JSON document that outlines permissions for users or groups
+- Roles: for AWS EC2 instances or AWS Services
+- Security: MFA + Password Policy
+- Grant Least Privilege
+- IAM Credentials Report is a Security Tool
+
+=== EC2 Fundamentals
 
 == Professional Certification
+
+* AWS Organization
+
+. SCPs, service control policy is a type of control policy that you can use to centrally control the maximum available *permissions granularity* for all accounts over an organization unit (OU)
+
+.AWS Organization Structure overview
+image::thumbs/images/aws_organizations_structure.png[]
+
+.SCPs Maximum Available Permission
+[source,json]
+----
+{
+  "Version": "2012-10-17",
+  "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": "*",
+        "Resource": "*"
+      }
+  ]
+}
+----
+
+. *_Tag Policy_* applied to enforce tag standardization, over other accounts e.g; HML Account
+
+.SCPs Hierarchy Representation
+[source,html]
+----
+|- root
+|-|- [ou1]
+|-|-|- dev-account
+|-|-|-|- [ou2]
+|-|-|-|-|- prod-account
+----
+
+* _FullAWSAccess_ SCP by default allows everything, SCPs list must be created to deny
+
+.Enabling Service Control policy Over Organization
+[source,json]
+----
+{
+  "Version": "2012-10-17",
+  "Statement": [
+      {
+        "Sid": "RequirementInstanceType",
+        "Effect": "Deny",
+        "Action": "ec2:RunInstances",
+        "Resource": "arn:aws:ec2:*:*:instance/*",
+        "Condition": {
+          "StringNotEquals": {
+            "ec2:InstanceType": "t2.micro"
+          }
+        }
+      }
+  ]
+}
+----
+
+* After creating this policy, it must be attached over OUs tree; in this case using our tree, ou2 will inherit the same SCP, *_over your tree scenario neither DEV-OU1 nor PROD-OU2 can create ec2:instances different from t2:micro_*
+
+.SCP EC2 Instance Launch Error
+image::thumbs/images/scp_ec2_launch_instance_error.png[]
+
+- https://github.com/aws-samples/aws-scps-with-terraform[SCPs with Terraform GitHub Sample]
+
+* Control Tower stays on the top of the organization and provides you some additional control, it integrates with a Directory Source over Single Sign On with SAML 2.0 or Microsoft AD, detective guardrails are used to governance and compliance
+
+
 
