@@ -1,10 +1,10 @@
-# https://github.com/clouddrove/terraform-aws-iam-user/blob/master/main.tf
-provider "aws" {
-  region = var.region
+module "module_associated" {
+  source = "../../modules"
 }
 
+
 resource "aws_iam_user" "dev_profile" {
-  name = var.dev_name
+  name = var.AWS_ACCOUNT_USER_NAME
 }
 
 # aws_iam_account_password_policy
