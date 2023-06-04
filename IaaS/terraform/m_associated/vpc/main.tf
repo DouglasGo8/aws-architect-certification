@@ -92,9 +92,9 @@ resource "aws_internet_gateway" "internet-gateway-1" {
   }
 }
 
-######################################################
-# Elastic IP for Nat Gateway ** Spensive Resource ** #
-######################################################
+#################################################################
+# Elastic IP for Nat Gateway ** Expensive Resource when used ** #
+#################################################################
 
 resource "aws_eip" "nat_eip" {
   vpc        = true

@@ -82,6 +82,36 @@ aws s3api list-buckets
 
 * *_Never ever_*, runs *_aws configure_* inside an EC2 instance *NEVER*, instead of use IAM Policies
 
+=== Private vs Public Network (IPv4)
+
+* Networking in AWS can define IPs over IPv4 and/or IPv6; IPv4 _1.160.10.240_ - IPv6 _3ff3:1900:4545:3:200:f8ff:fe21:67c7_
+* In private Network, all the computers / servers can talk to one another using private IPs, after attaching IGW Internet Gateway,__ these server instances can talk with public internet
+
+.IGW Public Communication
+image::thumbs/images/aws_private_network.png[]
+
+* Public IP must be unique across the whole internet
+* Private IP can be identified and used only inside a private network
+* EC2 has ephemeral ip, but we can use elastic ip to keep the same value
+* In general *_don't use Elastic IPs_*
+
+=== Placement Groups
+
+* Control EC2 Instances (Same Rack, hardware, and Same AZ) using some different strategies such as _Cluster_, _Spread_ and _Partition._
+* Cluster low-network latency but need willing to take the risk when the rack fails, all the instances will stop also
+* Spread low fail risk over split instances among AZs, but have limitation to 7 instances per AZ
+* Partition instances in multiples instances but not all isolated
+
+=== Elastic Network Interfaces (ENI)
+
+* Logical components in a VPC that represents a virtual network card, eth0 attached in an EC2 instance, with one or secondary IPv4, mac address
+
+* Which scenario we need a 2 ENIs with private IPS?
+The same application in multiple instances can be accessed using two different ENIs, but ENis cannot be attached across AZs
+
+.Using ENI Concept Attach in
+image::thumbs/images/AWS_ENI_Concept.png[]
+
 == Professional Certification
 
 * AWS Organization
