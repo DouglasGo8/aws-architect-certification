@@ -40,22 +40,82 @@ image::thumbs/images/aws_history_timeline.png[]
 * Elastic Beans Talk (PaaS)
 * Lambda (FaaS)
 
-=== IAM & AWS CLI
+=== IAM & Fundamentals
 
+* IAM (_Identity and Access Management_) is as global service, identities can be classified as humans and non-humans
+* Root account created by default, but never ever should be used or shared
 * Users are people within an organization, and must be grouped
 * Groups only contain users, not other groups
-* MFA is a combination of password with security device you own
+* Always apply the [.underline]#*_least privilege principle_*#, that means, don't give more or any permissions that a user really needs
+* Policies in a group will be applied in everyone inside this group
 
-.Lambda Authorizer Concept
-image::thumbs/images/lambda_authorizer.png[]
-
-.Sample use S3 API using AWS CLI
-[source,bash]
+.IAM Policy Structure
+[source,json]
 ----
-aws s3api list-buckets
+{
+  "Version": "2012-10-17",
+  "Id": "S3-Account-Permission",
+  "Statement": [
+      {
+        "Sid": "1",
+        "Effect": "Allow",
+        "Principal": {
+          "AWS": ["arn:aws:iam::123456:root"]
+        },
+        "Action": [
+          "s3:GetObject",
+          "s3:PutObject"
+        ],
+        "Resource": ["arn:aws:s3:::mybucket/*"],
+        "Condition": {
+          "StringEquals": ""
+        }
+      }
+  ]
+}
 ----
 
-* IAM Roles for Services, assign permissions to AWS Services with IAM Roles, e.g some EC2 instance needs access Lambda
+* #Principal can be composed by of account/user/role#
+* We can attach direct policies for a user, or even create an inline policy
+
+.ARN User
+[source,html]
+----
+arn:aws:iam:855174569821:user/dougdb
+----
+
+.IAMReadOnlyAccess Policy Sample
+[source,json]
+----
+{
+  "Version": "2012-10-17",
+  "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "iam:GenerateCredentialReport",
+          "iam:GenerateServiceLastAccessedDetails",
+          "iam:Get*",
+          "iam:List*",
+          "iam:SimulateCustomPolicy",
+          "iam:SimulatePrincipalPolicy"
+        ],
+        "Resource": "*"
+      }
+  ]
+}
+----
+
+* #IAM Roles for Services#, assign permissions to AWS Services with IAM Roles, e.g., some EC2 instance needs access Lambda
+* Instance Profile: works such as box for an iam role, can be used to pass role information to an EC2 instance, will be automatically created when a role is attached in EC2 Instance
+* Identity-based vs Resource-based policies: policies attached to services, e.g.: Bucket ACL, by default, only the account owner has access to S3 bucket, here we can classify as Identity, as Resource-based is a role attached to a service (S3)
+* IAM Cross Account: when a different account needs to perform some actions in your account
+* IAM Roles are classified as:
+** _AWS Services_: Allow AWS services like EC2, Lambda or other to perform actions in this account, most common use cases are EC2 and Lambda
+** _AWS Account_: Allow entities in other AWS accounts belonging to you or 3rd party to perform actions in this account
+** _Web Identity_: Allows users federated by the specified external web identity provider to assume this role to perform actions in this account
+** _SAML 2.0 federation_: Allow users federated with SAML 2.0 from a corporate directory to perform actions in this account
+** _Custom trust policy_: Create a custom trust policy to enable others to perform actions in this account
 
 * Quick summary for IAM
 
@@ -112,6 +172,12 @@ The same application in multiple instances can be accessed using two different E
 .Using ENI Concept Attach in
 image::thumbs/images/AWS_ENI_Concept.png[]
 
+.Sample use S3 API using AWS CLI
+[source,bash]
+----
+aws s3api list-buckets
+----
+
 == Professional Certification
 
 * AWS Organization
@@ -160,6 +226,34 @@ image::thumbs/images/aws_organizations_structure.png[]
         "organizations:DescribeOrganization",
         "account:ListRegions"
       ],
+      "Resource": "*"
+    }
+  ]
+}
+----
+
+.IAM Policy Sample
+[source,json]
+----
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["ec2:TerminationInstances"],
+      "Resource": ["*"]
+    },
+    {
+      "Effect": "Deny",
+      "Action": ["ec2:TerminationInstances"],
+      "Condition": {
+        "NotIpAddress": {
+          "aws:SourceIp": [
+            "192.0.2.0./24",
+            "203.0.113.0/24"
+          ]
+        }
+      },
       "Resource": "*"
     }
   ]
@@ -280,11 +374,11 @@ ArnEquals:
 Null:
 ----
 
-* Best Practice: use least privileges for Maximum security
+* Best Practice: use the _least privileges_ pattern for maximized security
 ** Access Advisor: see permissions granted and when last accessed
 ** Access Analyser: Analyze resources that are shared with external entity
 
-.IAM Roles vs Resource Based Policies
+.IAM Roles vs Resources Based Policies
 image::thumbs/images/IAM_Roles_vs_ResourceBasedPolicies.png[]
 
 . Using assume role (user, application or Service), you give up your original permission and take the permissions assigned to the role
@@ -302,3 +396,233 @@ image::thumbs/images/IAM_Roles_vs_ResourceBasedPolicies.png[]
 
 .IAM Analyzer with Policy Generation
 image::thumbs/images/IAM_Analyzer_actions.png[]
+
+=== Identity Management and Permissions
+
+* Here we do through the IAM service and all principals must be authenticated, what is a principal, a _person_ or _application_ that can make a request for an action or operation on AWS Resource
+* The identity-based policy applies to users and roles; they are JSON permissions policy documents that control what actions an identity can perform
+* The resource-based policy applies to AWS resources, are JSON documents also
+
+.The Resource-based policy for user Paul
+[source,json]
+----
+{
+  "Version": "2012-10-17",
+  "Id": "Policy123456",
+  "Statement": [
+    {
+      "Sid": "Stmt123455600",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::515123311123:user/Paul"
+      },
+      "Action": "s3:*",
+      "Resource": "arn:aws:s3:::theBucketXXX"
+    }
+  ]
+}
+----
+
+==== Users, Groups, Roles and Policies
+
+* Inside an AWS Account we've all of this, _users_, _groups_, _roles_ and _policy_
+* Users gain the *permissions* applied to the group through the policy; with policies we can define _permissions_ for the identities or resources they are associated
+* Up to 5000 individual user accounts can be created, users have no permissions by default.
+* The main reason to use groups is to apply _permissions_ to users using _policies_;
+* Roles are assumed by users, applications and services
+
+==== AWS Security Token STS
+
+.AWS Security Token Service (STS)
+image::thumbs/images/aws-security-token-service.png[]
+
+===== RBAC and ABAC
+
+* Role-Based Access and Attribute-Based Access Controls, the good method is apply the minimum permissions a user needs, and can be classified such as _Administrator_, _Billing_, _Data Scientist_
+
+.ABAC Policy Sample with Tag Key and Tag Value
+[source,json]
+----
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "rds:DescribeDBInstances",
+        "rds:DescribeDBInstances",
+        "rds:DescribeGlobalClusters"
+      ],
+      "Resource": [
+        "*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "rds:RebootDBInstance",
+        "rds:StartDBInstance",
+        "rds:StopDBInstance"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "aws:PrincipalTag/Department": "DBAdmins",
+          "rds:db-tag/Environment": "Production"
+        }
+      }
+    }
+  ]
+}
+----
+
+* the Permissions boundary sets the maximum permissions that the entity can have, attached to users and roles, applied over privilege escalation that's inherited same boundary permissions
+
+.Permissions Boundary Sample
+[source,json]
+----
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "IAMAccess",
+      "Effect": "Allow",
+      "Action": "iam:*",
+      "Resource": "*"
+    },
+    {
+      "Sid": "DenyPermBoundaryIAMPolicyAlteration",
+      "Effect": "Deny",
+      "Action": [
+        "iam:DeletePolicy",
+        "iam:DeletePolicyVersion",
+        "iam:CreatePolicyVersion",
+        "iam:SetDefaultPolicyVersion"
+      ],
+      "Resource": [
+        "arn:aws:iam::YourAccount_ID:policy/PermissionsBoundary"
+      ]
+    },
+    {
+      "Sid": "DenyRemovalOfPermBoundaryFromAnyUserOrRole",
+      "Effect": "Deny",
+      "Action": [
+        "iam:DeleteUserPermissionsBoundary",
+        "iam:DeleteRolePermissionsBoundary"
+      ],
+      "Resource": [
+        "arn:aws:iam::YourAccount_ID:user/*",
+        "arn:aws:iam::YourAccount_ID:role/*"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "iam:PermissionsBoundary": "arn:aws:iam::YourAccount_ID:policy/PermissionsBoundary"
+        }
+      }
+    },
+    {
+      "Sid": "DenyAccessIfRequiredPermBoundaryIsNotBeingApplied",
+      "Effect": "Deny",
+      "Action": [
+        "iam:PutUserPermissionsBoundary",
+        "iam:PutRolePermissionsBoundary"
+      ],
+      "Resource": [
+        "arn:aws:iam::YourAccount_ID:user/*",
+        "arn:aws:iam::YourAccount_ID:role/*"
+      ],
+      "Condition": {
+        "StringNotEquals": {
+          "iam:PermissionsBoundary": "arn:aws:iam::YourAccount_ID:policy/PermissionsBoundary"
+        }
+      }
+    },
+    {
+      "Sid": "DenyUserAndRoleCreationWithOutPermBoundary",
+      "Effect": "Deny",
+      "Action": [
+        "iam:CreateUser",
+        "iam:CreateRole"
+      ],
+      "Resource": [
+        "arn:aws:iam::YourAccount_ID:user/*",
+        "arn:aws:iam::YourAccount_ID:role/*"
+      ],
+      "Condition": {
+        "StringNotEquals": {
+          "iam:PermissionsBoundary": "arn:aws:iam::YourAccount_ID:policy/PermissionsBoundary"
+        }
+      }
+    }
+  ]
+}
+----
+
+.AWS Evaluation Logic Pipe
+image::thumbs/images/Evaluation_logic.png[]
+
+
+.A Trust policy sample (SAP-C02/Section-03/Lecture-35)
+image::thumbs/images/Use_case_Cross_account_access.png[]
+
+.AccountA Request Permission Policy
+[source,json]
+----
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "iam:ListRoles",
+        "sts:AssumeRole"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+----
+
+.AccountB Creates Role Trust Policy
+[source, json]
+----
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::ACCOUNT_A_ID/root"
+      },
+      "Action": "sts:AssumeRole",
+      "Condition": {
+        "StringEquals": {
+          "sts:ExternalId": "XXX999123"
+        }
+      }
+    }
+  ]
+}
+----
+
+.EC2 Instance Profile
+[source, json]
+----
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreateInstanceProfile",
+        "iam:AddRoleToInstanceProfile",
+        "ec2:AssociateIamInstanceProfile",
+        "iam:DeleteInstanceProfile",
+        "iam:GetRole",
+        "iam:PassRole"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+----
