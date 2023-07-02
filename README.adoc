@@ -140,6 +140,8 @@ arn:aws:iam:855174569821:user/dougdb
 
 * Security Group plays a critical role over AWS network, they control how the traffic (firewall) is allowed into or out of our EC2 instance, sg (security groups) can be also referenced between them using inbound/outbound concepts
 
+* Custom AMIs to optimize setups - https://blog.devops.dev/create-aws-ec2-instance-using-terraform-with-custom-ubuntu-amazon-machine-image-ami-having-f0b58c79864a[Custom AMI with TF]
+
 * *_Never ever_*, runs *_aws configure_* inside an EC2 instance *NEVER*, instead of use IAM Policies
 
 === Private vs Public Network (IPv4)
@@ -177,6 +179,32 @@ image::thumbs/images/AWS_ENI_Concept.png[]
 ----
 aws s3api list-buckets
 ----
+
+=== EC2 Instance Storage (EBS CSi)
+
+* Volume is a *network drive* you can attach to your instances, even after their termination, they can be mounted to one instance at a time, but it is possible to have the same EBS volume attached to multiple EC2 instances, over io1/2 ebs type family
+
+* They are locked to an Availability Zone (AZ), e.g.; an _EBS_ volume in _us-east-1a_ cannot be attached to _us-east-1b_
+
+* Snapshots make a backup (snapshot) of your EBS volume, not necessary detach volume, but is recommended to do it, can copy snapshots across AZ or region
+
+* EBS are network drives, but with limited performance, to improve this u can create an EC2 Instance Store, better I/O performance, can be good for buffer/cache/temp data
+
+* EBS Volumes types
+** gp2/gp3 (SSD) General purpose volume
+** iol/io2 (SSD) highest-performance SSD volume
+** stl (HDD) low cost HDD volume
+** scl (HDD) the lowest cost using HDD, used to be less frequently accessed
+
+* EBS Encryption is possible to protect all the data stored
+
+=== Amazon EFS
+
+* Managed NFS (network file system), then can be mounted on many EC2, and scaled up automatically
+* EFS works with EC2 instances in multi-AZ, scalable but expensive (3x gp2 w/ pay per use), can be used to web serving, data sharing
+* It uses NFSv4.1 protocol
+* Use _Security Group_ to control access to EFS, only compatible with Linux OS, can be encrypted using KMS
+* https://github.com/terraform-aws-modules/terraform-aws-efs/blob/v1.2.0/examples/complete/main.tf[TF EFS Creation Sample] using EFS over Terraform
 
 == Professional Certification
 
@@ -584,7 +612,7 @@ image::thumbs/images/Use_case_Cross_account_access.png[]
 ----
 
 .AccountB Creates Role Trust Policy
-[source, json]
+[source,json]
 ----
 {
   "Version": "2012-10-17",
@@ -606,7 +634,7 @@ image::thumbs/images/Use_case_Cross_account_access.png[]
 ----
 
 .EC2 Instance Profile
-[source, json]
+[source,json]
 ----
 {
   "Version": "2012-10-17",

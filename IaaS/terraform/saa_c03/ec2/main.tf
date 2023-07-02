@@ -26,6 +26,18 @@ resource "aws_instance" "t2-micro-inst" {
 
 }
 
+resource "aws_volume_attachment" "volume_attachment_data" {
+  device_name = "/dev/sdf"
+  instance_id = aws_instance.t2-micro-inst.id
+  volume_id   = aws_ebs_volume.volume_data.id
+}
+
+resource "aws_ebs_volume" "volume_data" {
+  availability_zone = "sa-east-1a"
+  size              = 10
+  encrypted         = false
+}
+
 resource "aws_key_pair" "key" {
   key_name   = "key-pub"
   public_key = file("../.secret/key.pub")
