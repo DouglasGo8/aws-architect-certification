@@ -15,6 +15,14 @@
 
 == Associated Certification
 
+=== Solutions Architecture Solutions
+
+.WhatsTheTime App
+image::thumbs/images/saa_certificate_solutions_whatisthetime.png[]
+
+.MyClothes App
+image::thumbs/images/saa_certificate_solutions-myclothes.app.png[]
+
 === Concepts
 
 .AWS Timeline
@@ -223,6 +231,10 @@ aws s3api list-buckets
 
 * Load balancers use security groups to allow traffic to control ports and protocol rules, #_an enhancement security action can be considered to use SG HTTP 80 a tied communication with ALB target_#
 
+* SSL over Load Balancer, HTTPs Over www/ALB/HTTP over private VPC under X.509 certificate
+
+* Deregistration delay - ALB & NLB, time to complete _in-flight requests_ while the instance is unregistering or unhelthy
+
 .Application Load Balancer Layer 7 sample, more details https://github.com/DouglasGo8/terraform-onreal-aws/blob/main/iac-aws/sre-ec2/alb[ALB TF]
 [source,hcl-terraform]
 ----
@@ -372,9 +384,84 @@ module "nlb-alb-microservice-quarkus.io-app" {
 ----
 
 * GWLB will not be covered in this doc
-
 * Sticky session is a feat., that means the same client is always redirected to the same instance
 * Cross-zone is enabled by default only ALB model, no charges for inter AZ data, NLB and GWLB are disabled by default, with charges per AZ
+
+==== Autoscaling Group
+
+* Supports auto instance scaling, based on events and load increase
+* There is a combination between ALBs and ASG over Scale-in and out.
+* Use launch-template (launch-configuration are deprecated)
+* Auto-scaling (in/out) can be based on CloudWatch alarms, ttps, avg. cpu
+
+==== RDS & ElastiCache
+
+* It Can increase up to 15 Read Replicas within AZ, Cross AZ or Cross Region
+* Replication is _ASYNC_, so reads are eventually consistent without additional costs in the same Region
+* Migrations from Single-AZ to Multi-AZ have downtime ops (no need to stop the DB)
+* Aurora is a proprietary tech from AWS (not open-sourced), have auto-scaling feature
+* With different EC2 machines, we can have custom endpoints to run analytical queries
+* An important feature is RDS Proxy that works for RDS apps to pool and share DB connections established with the database; this improves database efficiency by reducing the stress on database resources  _https://github.com/terraform-aws-modules/terraform-aws-rds-proxy[RDS Proxy TF detail]_, never can be accessible outside a VPC
+* ElastiCache is a managed cache cluster for Redis or Memcached
+
+==== Route 53
+
+* DNS (domain name system) basically can be classified as friendly hostname into the machine _IP_address;_ e.g.; _"google.com => 172.217.18.36"_, dns is the backbone of the Internet
+* Domain Registrar: Amazon Route 53, GoDaddy etc, can be classified in Records A, AAAA, CNAME, NS etc. stored in zone files, classified also as top level domain such as, .com, .us, .in, .gov etc, secondary level such as amazon.com, https://www.redhat.com/en as bellow demonstrated
+
+.URL Definition
+image::thumbs/images/url_definition.png[]
+
+.DNS Internal Works _(TTL CACHE)_
+image::thumbs/images/dns_sample.png[]
+
+* Root DNS server will be asked for the address in Managed ICANN (.com) after Managed IANA (TLD) and after ask to DNS Server (SLD) resulting in a record 'A' with a specific IP address
+
+* Route 53 is available, scalable, fully managed and _authoritative DNS_ this means the customer can update the DNS records, Route 53 is also a _domain registrar_ with the ability to check the health of your resources
+
+.Route 53 internals
+image::thumbs/images/route53.png[]
+
+* Each record contains:
+** Domain/subdomain,
+** Record Type A or AAAA
+** Value of record 12.33.21.22
+** Routing Policy, how route response to queries
+** TTL amount of time the record cached at DNS Resolvers
+** Records type as A / AAAA / CNAME and NS or Advanced as CAA / DS / MX / NAPTR / PTR / SOA / TXT / SPF and SRV
+
+* Records Types classification
+. A maps a hostname to IPv4
+. AAAA maps a hostname to IPv6
+. CNAME maps a hostname to another hostname, but the target must have an A or AAAA record, can't create a _CNAME_ record for the top node of DNS, not for example.com but yes to www.example.com
+. Public Hosted Zones contain records that specify how to route traffic to the internet, e.g., _application1.mypublicdomain.com_
+. Private Hosted Zones same public but the traffic will not be exposed, only works within a VPC e.g., _application1.mypublicdomain.com_
+. All DNS registrations will cost $0.50 monthly per hosted zone
+
+.Route53 Public vs Private Zones
+image::thumbs/images/route53_public_vs_private.png[]
+
+.Route53 Record
+[source,hcl-terraform]
+----
+resource "aws_route53_record" "www" {
+  zone_id = aws_route53_zone.primary.zone_id
+  name    = "www.sample.com"
+  type    = "A"
+  ttl     = 300
+  records = [aws_eip.lb.public_ip]
+}
+----
+
+* CNAME vs Alias to aws resources (ALB, Cloud front) exposes an AWS hostname, cname allows us to point to a hostname, but only for *NON-ROOT DOMAIN*, for alias options we can point to a hostname to an aws resource, works for both root and non-root domain and automatically recognizes changes in the resource's IP addresses
+
+* Route53 queries is not the same as ALB routing the traffic, DNS doesn't rout any traffic, it only responds to the DNS queries, if multiple values were specified in the same record, a random address will be chose
+
+
+
+
+
+---
 
 == Professional Certification
 
