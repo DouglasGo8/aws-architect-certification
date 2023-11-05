@@ -1,16 +1,7 @@
 = AWS Architect Associate & Professional Certifications
 
-- Including Stacks
-
-* Java v17
-* Quarkus 3.x
-* Terraform 1.4.x
-* Apache Camel 4.x
-
 == Links
 
-- https://quarkus.io/[Quarkus]
-- https://camel.apache.org/camel-quarkus/next/index.html[Camel Ext4Quarkus]
 - https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services[Region Service Table]
 
 == Associated Certification
@@ -190,28 +181,54 @@ aws s3api list-buckets
 
 === EC2 Instance Storage (EBS CSi)
 
-* Volume is a *network drive* you can attach to your instances, even after their termination, they can be mounted to one instance at a time, but it is possible to have the same EBS volume attached to multiple EC2 instances, over io1/2 ebs type family
+* EBS (Elastic block storage) volume is a *network drive* you can attach to your instances; it allows us to persist the data even after the instance terminates they can be mounted just to one instance at a time, *_they are bound to a specific availability zone_*, that means it cannot be attached in different zones
+
+* We can attach two different EBS Volumes attached at the same instance
 
 * They are locked to an Availability Zone (AZ), e.g.; an _EBS_ volume in _us-east-1a_ cannot be attached to _us-east-1b_
 
-* Snapshots make a backup (snapshot) of your EBS volume, not necessary detach volume, but is recommended to do it, can copy snapshots across AZ or region
+* Snapshots make a backup (snapshot) of your EBS volume, not the necessary detached volume, but is recommended to do it, can copy snapshots across AZ or region
 
-* EBS are network drives, but with limited performance, to improve this u can create an EC2 Instance Store, better I/O performance, can be good for buffer/cache/temp data
+* EBS are network drives, but with limited performance, to improve this u can create an EC2 Instance Store, better I/O performance, can be good for buffer/cache/temp data, but instance store loses their storage if they're stopped by (ephemeral behavior)
 
 * EBS Volumes types
+
 ** gp2/gp3 (SSD) General purpose volume
 ** iol/io2 (SSD) highest-performance SSD volume
 ** stl (HDD) low cost HDD volume
 ** scl (HDD) the lowest cost using HDD, used to be less frequently accessed
 
-* EBS Encryption is possible to protect all the data stored
+* EBS Multi-attach over iol/io2 family *is possible to attach the same EBS volume to multiple EC2 instances in the same AZ*
+
+* EBS Encryption is possible to protect all the data stored even over snapshots, all the encryption is transparent and handled by EC2 and EBS, with minimal impact on latency
+
+.EBS Volume TF sample
+[source,hcl-terraform]
+----
+resource "aws_volume_attachment" "my_ec2" {
+  count = var.instances_number
+
+  device_name = "/dev/sdh"
+  volume_id   = aws_ebs_volume.ebs.id
+  instance_id = module.ec2.id
+}
+
+resource "aws_ebs_volume" "ebs" {
+  count = var.instances_number
+
+  availability_zone = module.ec2.availability_zone
+  size              = 10 // GiB
+}
+----
 
 === Amazon EFS
 
-* Managed NFS (network file system), then can be mounted on many EC2, and scaled up automatically
+* Managed NFS (network file system), then can be mounted on many EC2 over multi-az, and scaled up automatically
 * EFS works with EC2 instances in multi-AZ, scalable but expensive (3x gp2 w/ pay per use), can be used to web serving, data sharing
 * It uses NFSv4.1 protocol
 * Use _Security Group_ to control access to EFS, only compatible with Linux OS, can be encrypted using KMS
+* Can be classified as Standard for frequent access and infrequent (EFS-IA) const to retrieve files, lower price to store
+
 * https://github.com/terraform-aws-modules/terraform-aws-efs/blob/v1.2.0/examples/complete/main.tf[TF EFS Creation Sample] using EFS over Terraform
 
 === High Availability and Scalability: ELB & ASG
