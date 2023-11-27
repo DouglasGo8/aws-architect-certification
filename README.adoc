@@ -6,7 +6,7 @@
 
 == Associated Certification
 
-=== Solutions Architecture Solutions
+=== Classic Solutions Architecture
 
 .WhatsTheTime App
 image::thumbs/images/saa_certificate_solutions_whatisthetime.png[]
@@ -474,11 +474,71 @@ resource "aws_route53_record" "www" {
 
 * Route53 queries is not the same as ALB routing the traffic, DNS doesn't rout any traffic, it only responds to the DNS queries, if multiple values were specified in the same record, a random address will be chose
 
+=== S3 Introduction
+
+* One of the building blocks of AWS, advertised as _"infinite scaling"_ storage, backup, archive and hybrid cloud storage, static websites are one of the common use cases
+
+* Buckets must have a globally unique name (across all regions all accounts), they are defined at the region level
+
+* Objects (files) have a key, key is the full path s3://my-bucket/my_file.txt Or s3://my-bucket/#*my_folder/my_another_folder/my_file.txt*# the key will be the full_path (yellow highlighted), composed by prefix + object name, everything and anything is actually a key
+
+* Max size by object is 5TB (5000 GB), but if more than 5TB, must be use 'multi-part upload'
+
+.S3 TF Creation Sample
+[source,hcl-terraform]
+----
+resource "aws_s3_object" "my_bucket" {
+    bucket = "myUniqueGlobalName-bucket"
+    acl    = false # fine grain security rules
+    tags = {
+      Name = "Bucket Tag"
+      Environment = "Dev"
+    }
+}
 
 
+# Json Polices 4Public access
+resource "aws_s3_bucket_policy" "my_bucket_policy" {
+  bucket = aws_s3_bucket.my_bucket.id
 
+  policy = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Id": "my_bucket",
+  "Statement": [
+    {
+      "Sid": "PublicRead",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": [
+        "s3:GetObject"
+      ],
+      "Resource": "arn:aws:s3:::my_bucket/*",
+    }
+  ]
+}
+POLICY
+}
+----
 
----
+* By default, public access will be denied, S3 buckets are crated with pre-signed url Ec2 will need EC2 instance roles with IAM permissions to access any s3 bucket, or CORs can be enabled by the security policies
+
+* S3 Storage classes list: _Standard, Standard IA, Intelligent Tiering, One-Zone IA, Glacier Instant Retrieval Glacier Flexible Retrieval, Glacier Deep Archive_ in general, infrequently access object, move to Standard IA, and no fast access move to Glacier or Glacier Deep Archive
+
+* In general bucket owners pay for all S3 storage and data transfer, with requester (download side) plan the requester pays the cost instead of the owner
+
+* Multi-part upload is recommended for file > 100Mb and must be for file > 5GB, for big file we can split the upload (parallel upload actions)
+
+****
+Q: You are looking to build an index of your files in S3, using Amazon RDS PostgreSQL.
+To build this index, it is necessary to read the first 250 bytes of each object in S3, which contains some metadata about the content of the file itself.
+There are over 100,000 files in your S3 bucket, amounting to 50 TB of data.
+How can you build this index efficiently?
+
+A: Create an app that will traverse the S3 bucket, issue a _Byte Range Fetch_ for the first 250 bytes, and store that info in RDS
+****
+
+'''
 
 == Professional Certification
 
