@@ -1,0 +1,687 @@
+= AWS Architect Associate
+
+== Links
+
+- https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services[Region Service Table]
+
+== Associated Certification
+
+=== Classic Solutions Architecture
+
+.WhatsTheTime App
+image::../thumbs/images/saa_certificate_solutions_whatisthetime.png[]
+
+.MyClothes App
+image::../thumbs/images/saa_certificate_solutions-myclothes.app.png[]
+
+=== Concepts
+
+.AWS Timeline
+image::../thumbs/images/aws_history_timeline.png[]
+
+. AWS enables you to build sophisticated and scalable applications
+. How to choose AWS Regions: its depends
+.. Compliance with data governance and legal requirements: data never leaves a regions without your explicit permission
+.. Proximity to reduce latency
+.. Kinds of available services within a Region
+.. Pricing all check price
+
+. AWS Common Global Services
+
+* Identity and Access Management (IAM)
+* Route 53 (DNS Service)
+* Cloud Front (Content Delivery Network)
+* WAF (Web Application Firewall)
+
+. AWS Services Common Region Services
+
+* AWS EC2 (IaaS)
+* Elastic Beans Talk (PaaS)
+* Lambda (FaaS)
+
+=== IAM & Fundamentals
+
+* IAM (_Identity and Access Management_) is as global service, identities can be classified as humans and non-humans
+* Root account created by default, but never ever should be used or shared
+* Users are people within an organization, and must be grouped
+* Groups only contain users, not other groups
+* Always apply the [.underline]#*_least privilege principle_*#, that means, don't give more or any permissions that a user really needs
+* Policies in a group will be applied in everyone inside this group
+
+.IAM Policy Structure
+[source,json]
+----
+{
+  "Version": "2012-10-17",
+  "Id": "S3-Account-Permission",
+  "Statement": [
+      {
+        "Sid": "1",
+        "Effect": "Allow",
+        "Principal": {
+          "AWS": ["arn:aws:iam::123456:root"]
+        },
+        "Action": [
+          "s3:GetObject",
+          "s3:PutObject"
+        ],
+        "Resource": ["arn:aws:s3:::mybucket/*"],
+        "Condition": {
+          "StringEquals": ""
+        }
+      }
+  ]
+}
+----
+
+* #Principal can be composed by of account/user/role#
+* We can attach direct policies for a user, or even create an inline policy
+
+.ARN User
+[source,html]
+----
+arn:aws:iam:855174569821:user/dougdb
+----
+
+.IAMReadOnlyAccess Policy Sample
+[source,json]
+----
+{
+  "Version": "2012-10-17",
+  "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "iam:GenerateCredentialReport",
+          "iam:GenerateServiceLastAccessedDetails",
+          "iam:Get*",
+          "iam:List*",
+          "iam:SimulateCustomPolicy",
+          "iam:SimulatePrincipalPolicy"
+        ],
+        "Resource": "*"
+      }
+  ]
+}
+----
+
+* #IAM Roles for Services#, assign permissions to AWS Services with IAM Roles, e.g., some EC2 instance needs access Lambda
+* Instance Profile: works such as box for an iam role, can be used to pass role information to an EC2 instance, will be automatically created when a role is attached in EC2 Instance
+* Identity-based vs Resource-based policies: policies attached to services, e.g.: Bucket ACL, by default, only the account owner has access to S3 bucket, here we can classify as Identity, as Resource-based is a role attached to a service (S3)
+* IAM Cross Account: when a different account needs to perform some actions in your account
+* IAM Roles are classified as:
+** _AWS Services_: Allow AWS services like EC2, Lambda or other to perform actions in this account, most common use cases are EC2 and Lambda
+** _AWS Account_: Allow entities in other AWS accounts belonging to you or 3rd party to perform actions in this account
+** _Web Identity_: Allows users federated by the specified external web identity provider to assume this role to perform actions in this account
+** _SAML 2.0 federation_: Allow users federated with SAML 2.0 from a corporate directory to perform actions in this account
+** _Custom trust policy_: Create a custom trust policy to enable others to perform actions in this account
+
+* Quick summary for IAM
+
+- Users: mapped to a physical user, has a password for AWS Console
+- Groups: contains only users
+- Policies: JSON document that outlines permissions for users or groups
+- Roles: for AWS EC2 instances or AWS Services
+- Security: MFA + Password Policy
+- Grant Least Privilege
+- IAM Credentials Report is a Security Tool
+
+=== EC2 Fundamentals
+
+* Used in everywhere and means Elastic Compute Cloud
+* Composed by many definitions such as:
+. Virtual Machines (Ec2 Instances),
+. Storing data (EbS & EfS)
+. Distributing loads across machines (ElB)
+. Scaling the instances using auto-scaling group (ASG)
+
+. EC2 Instance types: https://aws.amazon.com/ec2/instance-types[Ec2 Instance Types], we can check specific instances vantages on https://instances.vantage.sh[Instances Vantages]
+
+* Security Group plays a critical role over AWS network, they control how the traffic (firewall) is allowed into or out of our EC2 instance, sg (security groups) can be also referenced between them using inbound/outbound concepts
+
+* Custom AMIs to optimize setups - https://blog.devops.dev/create-aws-ec2-instance-using-terraform-with-custom-ubuntu-amazon-machine-image-ami-having-f0b58c79864a[Custom AMI with TF]
+
+* *_Never ever_*, runs *_aws configure_* inside an EC2 instance *NEVER*, instead of use IAM Policies
+
+=== Private vs Public Network (IPv4)
+
+* Networking in AWS can define IPs over IPv4 and/or IPv6; IPv4 _1.160.10.240_ - IPv6 _3ff3:1900:4545:3:200:f8ff:fe21:67c7_
+* In private Network, all the computers / servers can talk to one another using private IPs, after attaching IGW Internet Gateway,__ these server instances can talk with public internet
+
+.IGW Public Communication
+image::thumbs/images/aws_private_network.png[]
+
+* Public IP must be unique across the whole internet
+* Private IP can be identified and used only inside a private network
+* EC2 has ephemeral ip, but we can use elastic ip to keep the same value
+* In general *_don't use Elastic IPs_*
+
+=== Placement Groups
+
+* Control EC2 Instances (Same Rack, hardware, and Same AZ) using some different strategies such as _Cluster_, _Spread_ and _Partition._
+* Cluster low-network latency but need willing to take the risk when the rack fails, all the instances will stop also
+* Spread low fail risk over split instances among AZs, but have limitation to 7 instances per AZ
+* Partition instances in multiples instances but not all isolated
+
+=== Elastic Network Interfaces (ENI)
+
+* Logical components in a VPC that represents a virtual network card, eth0 attached in an EC2 instance, with one or secondary IPv4, mac address
+
+* Which scenario we need a 2 ENIs with private IPS?
+The same application in multiple instances can be accessed using two different ENIs, but ENis cannot be attached across AZs
+
+.Using ENI Concept Attach in
+image::../thumbs/images/AWS_ENI_Concept.png[]
+
+.Sample use S3 API using AWS CLI
+[source,bash]
+----
+aws s3api list-buckets
+----
+
+=== EC2 Instance Storage (EBS CSi)
+
+* EBS (Elastic block storage) volume is a *network drive* you can attach to your instances; it allows us to persist the data even after the instance terminates they can be mounted just to one instance at a time, *_they are bound to a specific availability zone_*, that means it cannot be attached in different zones
+
+* We can attach two different EBS Volumes attached at the same instance
+
+* They are locked to an Availability Zone (AZ), e.g.; an _EBS_ volume in _us-east-1a_ cannot be attached to _us-east-1b_
+
+* Snapshots make a backup (snapshot) of your EBS volume, not the necessary detached volume, but is recommended to do it, can copy snapshots across AZ or region
+
+* EBS are network drives, but with limited performance, to improve this u can create an EC2 Instance Store, better I/O performance, can be good for buffer/cache/temp data, but instance store loses their storage if they're stopped by (ephemeral behavior)
+
+* EBS Volumes types
+
+** gp2/gp3 (SSD) General purpose volume
+** iol/io2 (SSD) highest-performance SSD volume
+** stl (HDD) low cost HDD volume
+** scl (HDD) the lowest cost using HDD, used to be less frequently accessed
+
+* EBS Multi-attach over iol/io2 family *is possible to attach the same EBS volume to multiple EC2 instances in the same AZ*
+
+* EBS Encryption is possible to protect all the data stored even over snapshots, all the encryption is transparent and handled by EC2 and EBS, with minimal impact on latency
+
+.EBS Volume TF sample
+[source,hcl-terraform]
+----
+resource "aws_volume_attachment" "my_ec2" {
+  count = var.instances_number
+
+  device_name = "/dev/sdh"
+  volume_id   = aws_ebs_volume.ebs.id
+  instance_id = module.ec2.id
+}
+
+resource "aws_ebs_volume" "ebs" {
+  count = var.instances_number
+
+  availability_zone = module.ec2.availability_zone
+  size              = 10 // GiB
+}
+----
+
+=== Amazon EFS
+
+* Managed NFS (network file system), then can be mounted on many EC2 over multi-az, and scaled up automatically
+* EFS works with EC2 instances in multi-AZ, scalable but expensive (3x gp2 w/ pay per use), can be used to web serving, data sharing
+* It uses NFSv4.1 protocol
+* Use _Security Group_ to control access to EFS, only compatible with Linux OS, can be encrypted using KMS
+* Can be classified as Standard for frequent access and infrequent (EFS-IA) const to retrieve files, lower price to store
+
+* https://github.com/terraform-aws-modules/terraform-aws-efs/blob/v1.2.0/examples/complete/main.tf[TF EFS Creation Sample] using EFS over Terraform
+
+=== High Availability and Scalability: ELB & ASG
+
+* There are two kinds of scalability:
+** Vertical and Horizontal scalability, #_on the vertical side we've a t2.medium scaled up to the u-l2tbl.metal machine_# this is hardware/physical improvement, #_on the horizontal side we're replicating the same instance multiple times_# using scale-out (increase instances) and scale-in (decrease instances)
+
+==== Load balancers
+
+* Servers just to forward the traffic to multiple target servers, e.g.; _EC2 instances_, to spread loads across multiple instances with single point of access (DNS), with regular health checks, handling HTTP/s connections
+
+* AWS provide _4 kinds ALB models_
+. Classic Load Balancer - [CLB] HTTP/s, TCP, SSL
+. Application Load Balancer - [ALB] HTTP/s, WebSocket
+. Network Load Balancer - [NLB] TCP, TLS, UDP
+. Gateway Load Balancer [GWLB] Operates at Layer IP Protocol
+
+* Load balancers use security groups to allow traffic to control ports and protocol rules, #_an enhancement security action can be considered to use SG HTTP 80 a tied communication with ALB target_#
+
+* SSL over Load Balancer, HTTPs Over www/ALB/HTTP over private VPC under X.509 certificate
+
+* Deregistration delay - ALB & NLB, time to complete _in-flight requests_ while the instance is unregistering or unhelthy
+
+.Application Load Balancer Layer 7 sample, more details https://github.com/DouglasGo8/terraform-onreal-aws/blob/main/iac-aws/sre-ec2/alb[ALB TF]
+[source,hcl-terraform]
+----
+# Routing support query-string/hostname/path/headers
+module "application-alb" {
+  source             = "terraform-aws-modules/alb/aws"
+  version            = "8.7.0"
+  name               = "${local.name}-application-elb-http"
+  #
+  load_balancer_type = "application"
+  vpc_id             = "data.vpc_id"
+  subnets            = ["var.subnet_1.xxx", "var.subnet_2.yyy"]
+  security_groups    = [module.application_alb_http_sg.security_group_id] # bastion host
+  # Listeners
+  http_tcp_listeners = [
+    {
+      port               = 80
+      protocol           = "HTTP"
+      target_group_index = 0 # TG Index = 0
+    }
+  ]
+  # Target Groups
+  target_groups = [
+    # App1 Target Group - TG Index = 0
+    {
+      name_prefix          = "app1-"
+      backend_protocol     = "HTTP"
+      backend_port         = 80
+      target_type          = "instance"
+      deregistration_delay = 10
+      health_check         = {
+        enabled             = true
+        interval            = 30
+        path                = "/app1/index.html"
+        port                = "traffic-port"
+        healthy_threshold   = 3
+        unhealthy_threshold = 3
+        timeout             = 6
+        protocol            = "HTTP"
+        matcher             = "200-399"
+      }
+      protocol_version = "HTTP1"
+      # App1 Target Group - Targets
+      targets          = {
+        my_app1_vm1 = {
+          target_id = "ec2_private.id[0]"
+          port      = 80
+        },
+        my_app1_vm2 = {
+          target_id = "ec2_private.id[1]"
+          port      = 8080
+        }
+      }
+      tags = local.common_tags # Target Group Tags
+    }
+  ]
+
+  # HTTPS Listener Rules
+  https_listener_rules = [
+    # Rule-1: /app1* should go to App1 EC2 Instances
+    {
+      https_listener_index = 0
+      actions = [
+        {
+          type               = "forward"
+          target_group_index = 0 # TARGET Group
+        }
+      ]
+      conditions = [{
+        path_patterns = ["/app1*"]
+      }]
+    },
+    # Rule-2: /app2* should go to App2 EC2 Instances
+    {
+      https_listener_index = 0
+      actions = [
+        {
+          type               = "forward"
+          target_group_index = 1
+        }
+      ]
+      conditions = [{
+        path_patterns = ["/app2*"]
+      }]
+    },
+  ]
+
+  tags = local.common_tags
+}
+----
+
+.Network Load Balancer Layer 4 Sample to handler tons of a million requests per second
+[source,hcl-terraform]
+----
+# Less latency  +/- 100ms NLB vs +/- 400ms for ALB
+# Must be private IPs over EC2 instances
+# It is possible a combination of NLB and ALB handle http traffic
+module "nlb-alb-microservice-quarkus.io-app" {
+  source              = "terraform-aws-modules/alb/aws"
+  #
+  version             = "8.7.0"
+  name_prefix         = "microservice-nlb.quarkus.io-app"
+  load_balancer_type  = "network"
+  vpc_id              = module.vpc.vpc_id # data.vpc.id
+  subnets             = module.vpc.public_subnets # data.subnets.public_id[0, 1]
+
+  #  TCP Listener
+  http_tcp_listeners = [
+    {
+      port               = 80
+      protocol           = "TCP"
+      target_group_index = 0
+    }
+  ]
+
+  #  TLS Listener
+  https_listeners = [
+    {
+      port               = 443
+      protocol           = "TLS"
+      certificate_arn    = module.acm.acm_certificate_arn
+      target_group_index = 0
+    },
+  ]
+
+  # Target Groups
+  target_groups = [
+    {
+      name_prefix          = "microservice-quarkus.io-app"
+      backend_protocol     = "TCP"
+      backend_port         = 80
+      target_type          = "instance"
+      deregistration_delay = 10
+      health_check = {
+        enabled             = true
+        interval            = 30
+        path                = "/health"
+        port                = "traffic-port"
+        healthy_threshold   = 3
+        unhealthy_threshold = 3
+        timeout             = 6
+      }
+    },
+  ]
+  tags = local.common_tags
+}
+----
+
+* GWLB will not be covered in this doc
+* Sticky session is a feat., that means the same client is always redirected to the same instance
+* Cross-zone is enabled by default only ALB model, no charges for inter AZ data, NLB and GWLB are disabled by default, with charges per AZ
+
+==== Autoscaling Group
+
+* Supports auto instance scaling, based on events and load increase
+* There is a combination between ALBs and ASG over Scale-in and out.
+* Use launch-template (launch-configuration are deprecated)
+* Auto-scaling (in/out) can be based on CloudWatch alarms, ttps, avg. cpu
+
+==== RDS & ElastiCache
+
+* It Can increase up to 15 Read Replicas within AZ, Cross AZ or Cross Region
+* Replication is _ASYNC_, so reads are eventually consistent without additional costs in the same Region
+* Migrations from Single-AZ to Multi-AZ have downtime ops (no need to stop the DB)
+* Aurora is a proprietary tech from AWS (not open-sourced), have auto-scaling feature
+* With different EC2 machines, we can have custom endpoints to run analytical queries
+* An important feature is RDS Proxy that works for RDS apps to pool and share DB connections established with the database; this improves database efficiency by reducing the stress on database resources  _https://github.com/terraform-aws-modules/terraform-aws-rds-proxy[RDS Proxy TF detail]_, never can be accessible outside a VPC
+* ElastiCache is a managed cache cluster for Redis or Memcached
+
+==== Route 53
+
+* DNS (domain name system) basically can be classified as friendly hostname into the machine _IP_address;_ e.g.; _"google.com => 172.217.18.36"_, dns is the backbone of the Internet
+* Domain Registrar: Amazon Route 53, GoDaddy etc, can be classified in Records A, AAAA, CNAME, NS etc. stored in zone files, classified also as top level domain such as, .com, .us, .in, .gov etc, secondary level such as amazon.com, https://www.redhat.com/en as bellow demonstrated
+
+.URL Definition
+image::../thumbs/images/url_definition.png[]
+
+.DNS Internal Works _(TTL CACHE)_
+image::../thumbs/images/dns_sample.png[]
+
+* Root DNS server will be asked for the address in Managed ICANN (.com) after Managed IANA (TLD) and after ask to DNS Server (SLD) resulting in a record 'A' with a specific IP address
+
+* Route 53 is available, scalable, fully managed and _authoritative DNS_ this means the customer can update the DNS records, Route 53 is also a _domain registrar_ with the ability to check the health of your resources
+
+.Route 53 internals
+image::../thumbs/images/route53.png[]
+
+* Each record contains:
+** Domain/subdomain,
+** Record Type A or AAAA
+** Value of record 12.33.21.22
+** Routing Policy, how route response to queries
+** TTL amount of time the record cached at DNS Resolvers
+** Records type as A / AAAA / CNAME and NS or Advanced as CAA / DS / MX / NAPTR / PTR / SOA / TXT / SPF and SRV
+
+* Records Types classification
+. A maps a hostname to IPv4
+. AAAA maps a hostname to IPv6
+. CNAME maps a hostname to another hostname, but the target must have an A or AAAA record, can't create a _CNAME_ record for the top node of DNS, not for example.com but yes to www.example.com
+. Public Hosted Zones contain records that specify how to route traffic to the internet, e.g., _application1.mypublicdomain.com_
+. Private Hosted Zones same public but the traffic will not be exposed, only works within a VPC e.g., _application1.mypublicdomain.com_
+. All DNS registrations will cost $0.50 monthly per hosted zone
+
+.Route53 Public vs Private Zones
+image::../thumbs/images/route53_public_vs_private.png[]
+
+.Route53 Record
+[source,hcl-terraform]
+----
+resource "aws_route53_record" "www" {
+  zone_id = aws_route53_zone.primary.zone_id
+  name    = "www.sample.com"
+  type    = "A"
+  ttl     = 300
+  records = [aws_eip.lb.public_ip]
+}
+----
+
+* CNAME vs Alias to aws resources (ALB, Cloud front) exposes an AWS hostname, cname allows us to point to a hostname, but only for *NON-ROOT DOMAIN*, for alias options we can point to a hostname to an aws resource, works for both root and non-root domain and automatically recognizes changes in the resource's IP addresses
+
+* Route53 queries is not the same as ALB routing the traffic, DNS doesn't rout any traffic, it only responds to the DNS queries, if multiple values were specified in the same record, a random address will be chose
+
+=== S3 Introduction
+
+* One of the building blocks of AWS, advertised as _"infinite scaling"_ storage, backup, archive and hybrid cloud storage, static websites are one of the common use cases
+
+* Buckets must have a globally unique name (across all regions all accounts), they are defined at the region level
+
+* Objects (files) have a key, key is the full path s3://my-bucket/my_file.txt Or s3://my-bucket/#*my_folder/my_another_folder/my_file.txt*# the key will be the full_path (yellow highlighted), composed by prefix + object name, everything and anything are actually a key
+
+* Max size by object is 5TB (5000 GB), but if more than 5TB, must be use 'multi-part upload'
+
+.S3 TF Creation Sample
+[source,hcl-terraform]
+----
+resource "aws_s3_object" "my_bucket" {
+    bucket = "myUniqueGlobalName-bucket"
+    acl    = false # fine grain security rules
+    tags = {
+      Name = "Bucket Tag"
+      Environment = "Dev"
+    }
+}
+
+
+# Json Polices 4Public access
+resource "aws_s3_bucket_policy" "my_bucket_policy" {
+  bucket = aws_s3_bucket.my_bucket.id
+
+  policy = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Id": "my_bucket",
+  "Statement": [
+    {
+      "Sid": "PublicRead",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": [
+        "s3:GetObject"
+      ],
+      "Resource": "arn:aws:s3:::my_bucket/*",
+    }
+  ]
+}
+POLICY
+}
+----
+
+* By default, public access will be denied, S3 buckets are crated with pre-signed url Ec2 will need EC2 instance roles with IAM permissions to access any s3 bucket, or CORs can be enabled by the security policies
+
+* S3 Storage classes list: _Standard, Standard IA, Intelligent Tiering, One-Zone IA, Glacier Instant Retrieval Glacier Flexible Retrieval, Glacier Deep Archive_ in general, infrequently access object, move to Standard IA, and no fast access move to Glacier or Glacier Deep Archive
+
+* In general bucket owners pay for all S3 storage and data transfer, with requester (download side) plan the requester pays the cost instead of the owner
+
+* Multi-part upload is recommended for file > 100Mb and must be for file > 5GB, for big file we can split the upload (parallel upload actions)
+
+****
+Q: You are looking to build an index of your files in S3, using Amazon RDS PostgreSQL.
+To build this index, it is necessary to read the first 250 bytes of each object in S3, which contains some metadata about the content of the file itself.
+There are over 100,000 files in your S3 bucket, amounting to 50 TB of data.
+How can you build this index efficiently?
+
+A: Create an app that will traverse the S3 bucket, issue a _Byte Range Fetch_ for the first 250 bytes, and store that info in RDS
+****
+
+* S3 objects can be encrypted using one of 4 methods, SSE (Server-side Encryption) SSE with KMS Keys Stored and Custom Provided Keys SSE-C
+
+* SSE-KMS limitations, may be impacted by the KMS Limit, when uploading call the _GeneratedDataKey KMS_ will be invoked
+
+* _DSSE-KMS is just "double encryption based on KMS"_
+
+.S3 Force Encryption in Transit, Bucket policy
+[source,json]
+----
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Deny",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3::my-bucket/*",
+      "Condition": [
+        {
+          "Bool": {
+            "aws:SecureTransport": "false"
+          }
+        },
+        {
+          "StringNotEquals": {
+            "s3:x-amz-server-side-encryption": "aws:kmz"
+          }
+        },
+        {
+          "Null": {
+            "s3:x-amz-server-side-encryption-customer-algorithm": "true"
+          }
+        }
+      ]
+    }
+  ]
+}
+----
+
+==== S3 CORS
+
+* Cross-Origin Resource Sharing over S3 objects, scheme/host/port - in https/domain needs to be configured to allow web browser requests the origin over objects, enabling the correct CORS Headers
+
+==== S3 Pre-signed URLs
+
+* Allows accessing objects using temp permissions and actions
+
+==== S3 Access Points
+
+* Allows organizing objects/keys through by POLICY R/W to /finance prefix, for example, giving "finance" or other domain, access point
+* We can define the access pint to be accessible only from within the VPC, using VPC endpoint to access the access point the policy of VPC Endpoint must allow access to the target bucket
+
+.VPC Endpoint IAM Policy Sample
+[source,json]
+----
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": [
+        "arn:aws:s3:::my-bucket/*",
+        "arn:aws:s3:sa-east-1:12345679:accesspoint/my-vpc/object/*"
+      ]
+    }
+  ]
+}
+----
+
+==== S3 Object Lambda
+
+* Allows changing/enriched the object before it is retrieved by the caller apps, using S3 access point
+* OAC can enhance S3 access content, and can be used as an ingress to upload files to S3
+
+.S3 Object Lambda and Apache Camel Solution
+image::../thumbs/images/S3ObjectLambda.png[]
+
+=== AWS CloudFront
+
+* Content Delivery Network (CDN), improves the read actions with cached content, with global edge locations, DDoS protected integrated with Shield and AWS WEB App Firewall
+
+* Cache invalidation can be forced entire or partial
+
+=== AWS Snow Family
+
+* High-secure, portable devices to collect and process data at the edge of data migration
+
+* Storage Gateway to hybrid Cloud, part of infra in cloud and another on-premises
+
+==== Storage Comparison
+
+. S3: Object Storage
+. S3 Glacier: Object Archival
+. EBS Volumes: Network storage for one EC2 instance at a time
+. Instance Storage: Physical storage for your EC2 instance high IOPS
+. EFS: Network file System Linux instance, POSIX filesystem
+. FSx 4Windows: Network file system for Windows Server
+. FSx 4Lustre: High Performance Computing Linux File system
+. FSx 4NetApp ONTAP: High-OS Compatibility
+. FSx 4OpenZFS Mange ZFS file System
+. Storage Gateway: S3 & FSx File Gateway
+. Transfer Family: FTP, FTPs, SFTP interface on top Amazon S3 or EFS
+. DataSync: Schedule data sync from on-premises to AWS
+. Snowcone/Snowball/Snowmobile: to move large amount of data to the cloud, physically
+
+=== Decoupling Apps with Messaging
+
+==== SQS
+
+* Uses Queue as core messaging, based on pooling consumer in fulled managed service used to decoupling applications with unlimited throughput and messages in queue, with 4 days retained a message with 14 as maximum, low latency is one of superb features with 10ms to produce and receive the message but with a 256KB limitation payload
+
+* SDK to send Message API, the message is persisted until a consumer (gets / deletes) it, consumers receive and process messages in parallel, with _at-least-once_ delivery semantic, consumes will delete the message after consumes it
+
+* ASG scaling instance based on Queue length (Similar Keda) using _approximateNumberOfMessages_ as cloud metric alarm
+
+* When a message is polled (consumed) by a consumer, it becomes invisible to other consumers by default, a message will remain invisible by 30 seconds, if it isn't processed inside the default range, it will be processed twice, the feat _changemessagevisibility_ can be changed to get more time to process a message
+
+* Long polling, is when the consumer can wait for a message to arrive at your destination, _long polling_ decreases the number of API calls made to SQS while increasing the efficiency and latency in your application, in _
+
+.Apache Camel use case
+....
+waitTimeSeconds (consumer): Duration in seconds (0 to 20) that the ReceiveMessage action call will wait until a message is in the queue to include in the response.
+....
+
+* SQS FIFO (first-in first-out) messages will be ordered in a queue, this feat has some limitations for 300 msg/s and no batching
+
+* SQS as a buffer to database writes is common pattern to no loose transactions
+
+=== SNS
+
+* SNS works like broadcast to message, when a lot of consumer needs of the same message for different purposes
+
+* SNS + SQS Fanout pattern is SQS as Subscriber to an SNS Topic, as a possible sample we have a S3 bucket send an event for multiple SQS, here we can use the _SNS Fanout pattern_
+
+* SNS can filter a message based on JSOn Policies
+
+=== Kinesis
+
+* Responsible for _collect, process and analyze_ streaming data in real-time, suc logs, metrics website and clickstreams IoT telemetry data...
+
+* Shards is like Kafka partitions
+
+=== Amazon MQ
+
+* Traditional apps are running from on-premises may use open protocols such as MQTT, AMQP, STOMP etc. it does scale at the same proposition as SNS,SQS, and the MQ high availability will be crafted by multi zone
