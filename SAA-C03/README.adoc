@@ -685,3 +685,30 @@ waitTimeSeconds (consumer): Duration in seconds (0 to 20) that the ReceiveMessag
 === Amazon MQ
 
 * Traditional apps are running from on-premises may use open protocols such as MQTT, AMQP, STOMP etc. it does scale at the same proposition as SNS,SQS, and the MQ high availability will be crafted by multi zone
+
+== Containers on ECS Fargate ECR and EKS
+
+* Docker is software to run apps, Docker images are stored in Docker Repositories
+
+* On AWS we've three containers management they are ECS, EKS and Fargate
+
+* ECS Load Balancer Integrations refer to ALB support to some use cases, NLB is recommended only for high throughput/high performance use cases, or to pair it with AWS Private link
+
+* Tasks running in any AZ will share the same data in the EFS file system
+
+* ECS Automatically increase/decrease the desired number of ECS tasks, using AWS App Auto Scaling ECS Service Average CPU Utilization or Average Mem Utilization or Request Count Per Target, can be also scaled based on Target Tracking, Step Scaling or Schedule Scaling
+
+- https://docs.aws.amazon.com/AmazonECS/latest/developerguide/scheduling_tasks.html[ECS Tasks Schedule and Manual]
+
+****
+.ECS Task invoked by EventBridge
+image::../thumbs/images/ECSTaskEventBrigdeUploadFileSolution.png[]
+
+* This solution must be updated to include SQS, Lambda, DynamoDb and everything orchestrated by Apache Camel on Quarkus Bootstrap
+****
+
+* ECS Tasks exited can notify Event Bridge and send information about some possible issue
+
+* EKS Data Volumes supports, EBS, EFS FSx and FSx for NetApp ONTAP
+
+* AppRunner is a fully managed service that makes it easy to deploy web apps and apis at scale, no infrastructure required, started by source code or container
