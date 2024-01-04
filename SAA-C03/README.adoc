@@ -41,12 +41,20 @@ image::../thumbs/images/aws_history_timeline.png[]
 
 === IAM & Fundamentals
 
-* IAM (_Identity and Access Management_) is as global service, identities can be classified as humans and non-humans
+* IAM (_Identity and Access Management_) is as global service, identities can be classified as humans and non-humans, it is  service get authenticated and authorized to acess resources
+
 * Root account created by default, but never ever should be used or shared
-* Users are people within an organization, and must be grouped
-* Groups only contain users, not other groups
+
+* Users are people within an organization, and must be grouped; users can be federated
+
+* The Principal concept can be assigned to a user, application that make a request for a _action_ or _operation_ on an AWS Resource
+
+* Groups only contain users, not other groups, roles
+
 * Always apply the [.underline]#*_least privilege principle_*#, that means, don't give more or any permissions that a user really needs
+
 * Policies in a group will be applied in everyone inside this group
+
 
 .IAM Policy Structure
 [source,json]
@@ -105,25 +113,50 @@ arn:aws:iam:855174569821:user/dougdb
 }
 ----
 
+* Up to 5000 individual user accounts can be created
+
+* We have Policies that are called Identity, based on policies and resources based policies
+
+* Group can have one or Nth users, and the policy will define what this group can or not to do
+
 * #IAM Roles for Services#, assign permissions to AWS Services with IAM Roles, e.g., some EC2 instance needs access Lambda
+
 * Instance Profile: works such as box for an iam role, can be used to pass role information to an EC2 instance, will be automatically created when a role is attached in EC2 Instance
-* Identity-based vs Resource-based policies: policies attached to services, e.g.: Bucket ACL, by default, only the account owner has access to S3 bucket, here we can classify as Identity, as Resource-based is a role attached to a service (S3)
+
+* Identity-based #(authC)# vs Resource-based #(authZ)# policies: policies attached to services, e.g.: Bucket ACL, by default, only the account owner has access to S3 bucket, here we can classify as Identity, as Resource-based is a role attached to a service (S3)
+
+* Identity-based policies can be applied to users, groups and roles
+
 * IAM Cross Account: when a different account needs to perform some actions in your account
+
 * IAM Roles are classified as:
+
+** _AWS Users_: User can use _sts:AssumeRole_ to have some permissions through policies attached
+
 ** _AWS Services_: Allow AWS services like EC2, Lambda or other to perform actions in this account, most common use cases are EC2 and Lambda
+
 ** _AWS Account_: Allow entities in other AWS accounts belonging to you or 3rd party to perform actions in this account
+
 ** _Web Identity_: Allows users federated by the specified external web identity provider to assume this role to perform actions in this account
+
 ** _SAML 2.0 federation_: Allow users federated with SAML 2.0 from a corporate directory to perform actions in this account
+
 ** _Custom trust policy_: Create a custom trust policy to enable others to perform actions in this account
 
-* Quick summary for IAM
+* #Quick summary for IAM#
 
 - Users: mapped to a physical user, has a password for AWS Console
+
 - Groups: contains only users
+
 - Policies: JSON document that outlines permissions for users or groups
-- Roles: for AWS EC2 instances or AWS Services
+
+- Roles: for AWS EC2 instances or AWS Services, is a way to delegate permission to other services and potentially users
+
 - Security: MFA + Password Policy
+
 - Grant Least Privilege
+
 - IAM Credentials Report is a Security Tool
 
 === EC2 Fundamentals
@@ -712,3 +745,69 @@ image::../thumbs/images/ECSTaskEventBrigdeUploadFileSolution.png[]
 * EKS Data Volumes supports, EBS, EFS FSx and FSx for NetApp ONTAP
 
 * AppRunner is a fully managed service that makes it easy to deploy web apps and apis at scale, no infrastructure required, started by source code or container
+
+== Serverless
+
+* A new paradigm in which the developers don't have to manage servers anymore
+* Initially... Serverless == FaaS (Function as a Service)
+
+.AWS Serverless
+[%header,cols=1*]
+|===
+
+|AWS Serverless List
+|Lambda
+|DynamoDb
+|Cognito
+|API Gateway
+|S3
+|SNS & SQS
+|Kinesis
+|Aurora Serverless
+|Step Functions
+|Fargate
+|===
+
+* Virtual Functions without server management
+* Limited by time—short executions
+* Run on-demand
+* Scaling is automated
+
+=== Lambda Limits - per Region
+
+* Memory allocation 128MB up to 10GB (1MB increments)
+* Maximum execution time 900 seconds (15Min)
+* Env Variables up to 4KB
+* Disk capacity in the "function container" (in /tmp) 512 to 10GB
+* Concurrency executions: 1000 p/s (can be increased)
+
+
+.CloudFront Functions vs Lambda@Edge - Use Cases
+[%header,cols=2*]
+|===
+|CloudFront Functions
+|Lambda@Edge
+
+|Cache Key normalization: Transform request attributes (headers, cookies, query string, URL) to create an optimal Cache Key
+|Longer Execution time (several ms)
+
+|Header manipulation: Inserts/modify/delete HTTP headers in the request or response
+|Adjustable CPU or memory
+
+|URL rewrites or redirects
+|Your code depends on a 3rd libraries (eg; AWS SDK to access other AWS Services)
+
+|Request Authentication & Authorization: Create and validate user-generated tokens (e.g., JWT) to allow/deny requests
+|Network access to use external services for processing
+|N/A
+|File System access or access to the body HTTP Headers
+|===
+
+* Lambda can be invoked from RDS & Aurora, that allow process data events from within a database
+* Supported by RDS for PostgreSQL and Aurora MYSQL (Debezium Concept)
+
+=== DynamoDb Notes
+
+* DynamoDB Accelerator (DAX) is a fully managed, highly available, in-memory cache for DynamoDB that delivers up to 10x performance improvement. It caches the most frequently used data, thus offloading the heavy reads on hot keys off your DynamoDB table, hence preventing the #"ProvisionedThroughputExceededException"# exception.
+
+* DynamoDB Streams allows you to capture a time-ordered sequence of item-level modifications in a DynamoDB table. It's integrated with AWS Lambda so that you create triggers that automatically respond to events in real-time.
