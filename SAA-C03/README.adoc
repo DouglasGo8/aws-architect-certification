@@ -121,13 +121,69 @@ arn:aws:iam:855174569821:user/dougdb
 
 * #IAM Roles for Services#, assign permissions to AWS Services with IAM Roles, e.g., some EC2 instance needs access Lambda
 
-* Instance Profile: works such as box for an iam role, can be used to pass role information to an EC2 instance, will be automatically created when a role is attached in EC2 Instance
+* Instance Profile: based on AWS STS (Security Token Service), e.g.: an EC2 instance needs access S3 bucket, for this to EC2 get authorized we never can store _Credentials or Secret Keys in instance_ the correct is use the instance profile and attach _IAM role_ to the instance, EC2 will th attempt to assume the role using STS Assume Role API Calls, by a specific policy called _Trust Policy_, composed by a _Permission Policy_ that classify which actions can be made in this bucket, the trust policy control can assume the role based on a STS temporary security credentials provided to EC2
 
-* Identity-based #(authC)# vs Resource-based #(authZ)# policies: policies attached to services, e.g.: Bucket ACL, by default, only the account owner has access to S3 bucket, here we can classify as Identity, as Resource-based is a role attached to a service (S3)
+.Instance Profile on Trust Policy STS
+[source, json]
+----
+{
+  "Effect": "Allow",
+  "Principal": {
+    "Service": "ec2.amazonaws.com"
+  },
+  "Action": "sts:AssumeRole "
+}
+----
 
-* Identity-based policies can be applied to users, groups and roles
+* Identity-based vs Resource-based policies: Identity-based JSOn Documents that control what actions an #identity# can perform, can be inline (exclusive to group/user/role) or managed by AWS can be reused by the same inline group; Resource-based are the JSON Policy Document attached to an AWS Resource such as S3, Resource-based grants the specified #Principal#, kinds of specific permission can perform on the resource (S3), a IAM Role use both identity and resource policies
+
+.Resource Policy for a Principal
+[source,json]
+----
+{
+  "Version": "2012-10-17",
+  "Id": "Policy313323412",
+  "Statement": [
+      {
+        "Sid": "Stmt313323412",
+        "Effect": "Allow",
+        "Principal": {
+          "AWS": "arn:aws:iam::515148244:user/Paul"
+        },
+        "Action": [
+          "s3:*"
+        ],
+        "Resource": "arn:aws:s3::theHellsBucket"
+      }
+  ]
+}
+----
 
 * IAM Cross Account: when a different account needs to perform some actions in your account
+
+* Permission Boundaries: sets the maximum available permissions an Identity can have, Privilege escalation must be avoided using permission boundaries
+
+.Permission Boundaries
+[source, json]
+----
+{
+  "Version": "2012-10-17",
+   "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "s3:*",
+          "cloudwatch:*",
+          "ec2:*"
+        ],
+        "Resource": "*"
+      }
+  ]
+}
+----
+
+
+image::../thumbs/images/theIAMRole.png[]
 
 * IAM Roles are classified as:
 
@@ -158,6 +214,8 @@ arn:aws:iam:855174569821:user/dougdb
 - Grant Least Privilege
 
 - IAM Credentials Report is a Security Tool
+
+-  https://policysim.aws.amazon.com/[Policy Simulator]
 
 === EC2 Fundamentals
 
