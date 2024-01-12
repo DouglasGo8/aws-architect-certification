@@ -14,6 +14,40 @@ image::../thumbs/images/saa_certificate_solutions_whatisthetime.png[]
 .MyClothes App
 image::../thumbs/images/saa_certificate_solutions-myclothes.app.png[]
 
+
+=== Serverless Architecture
+
+****
+. First Solution
+* Expose as REST API with HTTPS
+* Serverless Architecture
+* Users should be able to directly interact with their own folder in S3
+* Users should authenticate through a managed serverless service
+* The users can write and read to-dos, but they mostly read them
+* The database should scale and have some high-read throughput
+
+.. Solution can be composed by AWS Gateway, (Cognito or RHSSO Keycloak En), Lambda and DynamoDB
+.. IAM S3 Permission using Temp Credentials between Mobile Client and S3 Resources,
+.. High-read throughput static data DAX for DynamoDb
+
+
+.Mobile Serverless Api and Caching
+image::../thumbs/images/mobile_app_caching.png[]
+
+. Second Solution
+** Site should scale globally
+** Blogs are rarely written, but often read
+** Some websites are purely static files, the rest is a dynamic REST API
+** Caching must be implemented where possible
+** New users that subscriber should receive a welcome email
+** Any photo uploaded to the blog should have a thumbnail generated
+
+image::../thumbs/images/ServerlessWebSiteStreamDyanmo.png[]
+
+** To cloudfront ca use transfer acceleration whe uploaded a photo, and trigger a lambda to generate and the thumb and sns to email
+****
+
+
 === Concepts
 
 .AWS Timeline
@@ -207,7 +241,7 @@ image::../thumbs/images/theIAMRole.png[]
 
 - Policies: JSON document that outlines permissions for users or groups
 
-- Roles: for AWS EC2 instances or AWS Services, is a way to delegate permission to other services and potentially users
+- Roles: for AWS EC2 instances or AWS Services, is a way to delegate permission to other services and potential users
 
 - Security: MFA + Password Policy
 
@@ -219,56 +253,138 @@ image::../thumbs/images/theIAMRole.png[]
 
 === EC2 Fundamentals
 
-* Used in everywhere and means Elastic Compute Cloud
+* Used in everywhere and means Elastic Compute Cloud, one of the most important services in AWS
+
+.Instances EC2 Type
+[%header,cols=4*]
+|===
+
+|Family
+|Type
+|vCPUs
+|Memory GiB
+
+|General purpose
+|t2.micro
+|1
+|1
+
+|Compute Optimized
+|c5n.large
+|2
+|5.25
+
+|Memory optimized
+|r5ad.large
+|2
+|16
+
+|Storage Optimized
+|d2.xlarge
+|4
+|30.5
+
+|GPU instances
+|g2.xlarge
+|8
+|15
+
+|===
+
+****
+* Benefits of EC2
+. *Elastic Computing*: easily launch hundreds of thousands of EC2 instances within minutes.
+. *Complete Control*: you control the EC2 instances with full root/administrative access.
+. *Flexible*: Choice of instance types, operating systems, and software packages
+. *Reliable*: EC2 offers very high levels of availability and instances can be rapidly commissioned and replaced
+. *Secure*: Fully integrated with Amazon VPC and security features
+. *Inexpensive*: Low cost, pay for what you use
+****
+
 * Composed by many definitions such as:
-. Virtual Machines (Ec2 Instances),
-. Storing data (EbS & EfS)
-. Distributing loads across machines (ElB)
+
+. Virtual Machines (EC2 Instances)
+
+. Storing data (EBS & EFS)
+
+. Distributing loads across machines (ELB)
+
 . Scaling the instances using auto-scaling group (ASG)
 
 . EC2 Instance types: https://aws.amazon.com/ec2/instance-types[Ec2 Instance Types], we can check specific instances vantages on https://instances.vantage.sh[Instances Vantages]
 
 * Security Group plays a critical role over AWS network, they control how the traffic (firewall) is allowed into or out of our EC2 instance, sg (security groups) can be also referenced between them using inbound/outbound concepts
 
-* Custom AMIs to optimize setups - https://blog.devops.dev/create-aws-ec2-instance-using-terraform-with-custom-ubuntu-amazon-machine-image-ami-having-f0b58c79864a[Custom AMI with TF]
+* Custom AMIs to optimize setups—https://blog.devops.dev/create-aws-ec2-instance-using-terraform-with-custom-ubuntu-amazon-machine-image-ami-having-f0b58c79864a
 
-* *_Never ever_*, runs *_aws configure_* inside an EC2 instance *NEVER*, instead of use IAM Policies
+* #*_Never ever_*, run *_aws configure_* command, inside an EC2 instance *NEVER*, instead of use IAM Policies#; instead of use *Instance profile* is the way that we can connect an IAM Role to our EC2 instance
+
+.Instances EC2 Type
+[%header,cols=2*]
+|===
+|Instance Model
+|Use Case
+
+|On-Demand
+|Developer working on a small project for several hours, cannot be interrupted
+
+|Reserved
+|Steady-state, business critical, line-of-business application; continuous demand
+
+|Scheduled Reserved
+|Reporting Application, run for 6 hours a day, 4 days per week
+
+|Spot Instances
+|Developer working on a small project for several hours; cannot be interrupted
+
+|Dedicated Instances
+|Security-sensitive application requires dedicated hardware, per-instance billing
+
+|Dedicated Hosts
+|Database with per-socket licensing
+|===
 
 === Private vs Public Network (IPv4)
 
 * Networking in AWS can define IPs over IPv4 and/or IPv6; IPv4 _1.160.10.240_ - IPv6 _3ff3:1900:4545:3:200:f8ff:fe21:67c7_
-* In private Network, all the computers / servers can talk to one another using private IPs, after attaching IGW Internet Gateway,__ these server instances can talk with public internet
+
+* In private Network, all the computers / servers can talk to one another using private IPs, after attaching IGW Internet Gateway, these server instances can talk with public internet
 
 .IGW Public Communication
-image::thumbs/images/aws_private_network.png[]
+image::../thumbs/images/aws_private_network.png[,500,150,role=right]
 
 * Public IP must be unique across the whole internet
+
 * Private IP can be identified and used only inside a private network
+
 * EC2 has ephemeral ip, but we can use elastic ip to keep the same value
+
 * In general *_don't use Elastic IPs_*
 
 === Placement Groups
 
 * Control EC2 Instances (Same Rack, hardware, and Same AZ) using some different strategies such as _Cluster_, _Spread_ and _Partition._
 * Cluster low-network latency but need willing to take the risk when the rack fails, all the instances will stop also
-* Spread low fail risk over split instances among AZs, but have limitation to 7 instances per AZ
-* Partition instances in multiples instances but not all isolated
+* Spread low fail risk over split instances among AZs, but have limitation to seven instances per AZ
+* Partition instances in multiple instances but not all isolated
 
 === Elastic Network Interfaces (ENI)
 
 * Logical components in a VPC that represents a virtual network card, eth0 attached in an EC2 instance, with one or secondary IPv4, mac address
 
 * Which scenario we need a 2 ENIs with private IPS?
-The same application in multiple instances can be accessed using two different ENIs, but ENis cannot be attached across AZs
+The same application spread out in different instances can be accessed/tied using two different ENIs but with different IPs, *but ENis cannot be attached across AZs*
+
+* ENIs and EPIs can be _remapped_ to different instances
 
 .Using ENI Concept Attach in
-image::../thumbs/images/AWS_ENI_Concept.png[]
+image::../thumbs/images/AWS_ENI_Concept.png[ENI, 200,100, role=right]
 
-.Sample use S3 API using AWS CLI
-[source,bash]
-----
-aws s3api list-buckets
-----
+=== NAT Gateways and NAT Instances
+
+* Both are used for the one purpose, that is to enable the instances that we deploy into private subnets to connect to the internet, based on outbound connecting
+
+* Main rules are, NAT Gateways/Instance(EC2 Instance like bridge or proxy and must disable the source/destinations checks) will always be deployed in Public Subnets, never in private, and the NAT IPs must be bind in Route table
 
 === EC2 Instance Storage (EBS CSi)
 
@@ -312,6 +428,8 @@ resource "aws_ebs_volume" "ebs" {
 }
 ----
 
+* Instance metadata is alwyas available in http://169.254.169.254/latest/meta-data
+
 === Amazon EFS
 
 * Managed NFS (network file system), then can be mounted on many EC2 over multi-az, and scaled up automatically
@@ -342,6 +460,51 @@ resource "aws_ebs_volume" "ebs" {
 * SSL over Load Balancer, HTTPs Over www/ALB/HTTP over private VPC under X.509 certificate
 
 * Deregistration delay - ALB & NLB, time to complete _in-flight requests_ while the instance is unregistering or unhelthy
+
+* ALB operates at the request level, routes based on content of request #(layer 7)#,
+supports routing based on path, host, source-ip address and query-string,
+supports EC2 Instances, IP Addresses, lambda function and containers as targets
+
+* NLB operates at the connection level, routes connections based on IP protocol data #(layer 4)#, offers ultra-high performance, low latency and TLS offloading at scale, support static IP/Elastic IP, supports UDP and static IP addresses as targets
+
+* GLB Used in front of virtual appliances such as firewall, IDS/IPS and deep packet inspection system, uses Layer 3 listening all packets on all ports
+
+[%header,cols=3*]
+|===
+|Feature
+|ALB
+|NLB
+
+|OSI Layer
+|7
+|4
+
+|Target Type
+|HTTP, HTTPS, gRPC
+|TCP,UDP,TLS
+
+|Private Link
+|No
+|(TCP,TLS)
+
+|Static IP address
+|No
+|Yes
+
+|HTTP Header-Based Router
+|Yes
+|No
+
+|Source IP preservation
+|x-forwarded-for
+|native
+
+|SSL Termination
+|Load Balancer
+|Load Balancer on target
+
+|===
+
 
 .Application Load Balancer Layer 7 sample, more details https://github.com/DouglasGo8/terraform-onreal-aws/blob/main/iac-aws/sre-ec2/alb[ALB TF]
 [source,hcl-terraform]
@@ -500,7 +663,57 @@ module "nlb-alb-microservice-quarkus.io-app" {
 * Supports auto instance scaling, based on events and load increase
 * There is a combination between ALBs and ASG over Scale-in and out.
 * Use launch-template (launch-configuration are deprecated)
-* Auto-scaling (in/out) can be based on CloudWatch alarms, ttps, avg. cpu
+* Auto-scaling (in/out) can be based on CloudWatch alarms, ttps, avg. Of cpu
+* Responds to EC2 status checks and Cloudwatch metrics
+* Can scale based on demand (performance) or on a schedule
+
+.Launch Template Options
+****
+AMI and Instance type
+
+
+EBS Volume
+
+Security Groups
+
+Key pair
+
+IAM instance profile
+
+User data
+
+Shutdown behavior
+
+Termination protection
+
+Placement group name
+
+Capacity reservation
+
+Tenancy
+
+Purchasing option (e.g. Spot)
+
+****
+
+.Launch Config Options
+****
+ANU and Instance type
+
+EBS Volume
+
+Security Groups
+
+Key pair
+
+Purchasing option (e.g Spot)
+
+IAM Instance profile
+
+User data
+****
+
+
 
 ==== RDS & ElastiCache
 
@@ -574,10 +787,16 @@ resource "aws_route53_record" "www" {
 * Objects (files) have a key, key is the full path s3://my-bucket/my_file.txt Or s3://my-bucket/#*my_folder/my_another_folder/my_file.txt*# the key will be the full_path (yellow highlighted), composed by prefix + object name, everything and anything are actually a key
 
 * Max size by object is 5TB (5000 GB), but if more than 5TB, must be use 'multi-part upload'
+.Sample use S3 API using AWS CLI
 
+[source,bash]
+----
+aws s3api list-buckets
+----
 .S3 TF Creation Sample
 [source,hcl-terraform]
 ----
+
 resource "aws_s3_object" "my_bucket" {
     bucket = "myUniqueGlobalName-bucket"
     acl    = false # fine grain security rules
@@ -631,7 +850,7 @@ A: Create an app that will traverse the S3 bucket, issue a _Byte Range Fetch_ fo
 
 * S3 objects can be encrypted using one of 4 methods, SSE (Server-side Encryption) SSE with KMS Keys Stored and Custom Provided Keys SSE-C
 
-* SSE-KMS limitations, may be impacted by the KMS Limit, when uploading call the _GeneratedDataKey KMS_ will be invoked
+* The KMS Limit may impact SSE-KMS limitations, when uploading call the _GeneratedDataKey KMS_ will be invoked
 
 * _DSSE-KMS is just "double encryption based on KMS"_
 
@@ -708,6 +927,22 @@ A: Create an app that will traverse the S3 bucket, issue a _Byte Range Fetch_ fo
 .S3 Object Lambda and Apache Camel Solution
 image::../thumbs/images/S3ObjectLambda.png[]
 
+=== S3 Storage Class
+
+* S3 Standard - General Purpose; Availability 99.99%l, for frequentely accessed data, with low latency and high throughput
+
+* S3 Standard - Infrequent Access (IA); when data is less frequently accessed, but requires rapid access when needed, lower cost than S3 standard
+
+* S3 One Zone Infrequent Access; Indicated to Disaster discovery backups
+
+* S3 Glacier Instant Retrieval; to data access once a quarter
+
+* S3 Glacier Flexible Retrieval; Expedited 1 to 5 min, standard 3 to 5 hours, bulk 5 to 12 hours
+
+* S3 Glacier Deep Archive
+
+* S3 Intelligent Tiering; Moves objects automatically between Access Tiers based on usage
+
 === AWS CloudFront
 
 * Content Delivery Network (CDN), improves the read actions with cached content, with global edge locations, DDoS protected integrated with Shield and AWS WEB App Firewall
@@ -779,7 +1014,7 @@ waitTimeSeconds (consumer): Duration in seconds (0 to 20) that the ReceiveMessag
 
 == Containers on ECS Fargate ECR and EKS
 
-* Docker is software to run apps, Docker images are stored in Docker Repositories
+* Docker is software to run apps; Docker images are stored in Docker Repositories
 
 * On AWS we've three containers management they are ECS, EKS and Fargate
 
@@ -869,3 +1104,35 @@ image::../thumbs/images/ECSTaskEventBrigdeUploadFileSolution.png[]
 * DynamoDB Accelerator (DAX) is a fully managed, highly available, in-memory cache for DynamoDB that delivers up to 10x performance improvement. It caches the most frequently used data, thus offloading the heavy reads on hot keys off your DynamoDB table, hence preventing the #"ProvisionedThroughputExceededException"# exception.
 
 * DynamoDB Streams allows you to capture a time-ordered sequence of item-level modifications in a DynamoDB table. It's integrated with AWS Lambda so that you create triggers that automatically respond to events in real-time.
+
+== Database AWS Solutions
+
+* RDBMS (SQL/OLTP); RDS, Aurora, great for Joins
+.. Auto-scaling capability for storage
+.. Security through IAM, Security Groups, KMS and SSL in transit
+.. Aurora Serverless, for unpredictable/intermittent workloads
+
+* NoSQL database; no joins, noSQL DynamoDB (Json), ElasticCache, Neptune, DocumentDb 4MongoDB, Keyspaces
+.. ElastiCache In-memory data-store, sub-millisecond latency
+.. DynamoDB is a proprietary db serverless NoSQL
+.. Keyspaces is a Cassandra Managed Equivalent DB
+
+* Data Warehouse (SQL Analytics) Redshift OLAP, Athena, EMR
+
+* Search: Opensearch (JSON) free text, unstructured searchs
+
+* Graphs Amazon Neptune; display relationships between data
+
+* Ledger; Amazon Quantum Ledger Database
+
+* Time series Amazon Timestream
+
+
+=== Data & Analytics
+
+* AWS Athena is a serverless service to analyze data stored in AWS S3, using standard SQL language to query the files build on Presto, use cases can be BI, analytics, reporting and analyze & query VPC Flow Logs, ELB Logs
+* In AWS Athena we can use COLUMNAR data for cost-savings (less scan), using file > 128 to reduce overhead
+
+* AWS Redshift is based on Postgres, but it's not used for OLTP, but OLAP online analytical processing (analytics and warehousing), with 10x better performance that other data warehouses
+
+* AWS Glue is an ETL managed Service useful to prepare and transform data for analytics
