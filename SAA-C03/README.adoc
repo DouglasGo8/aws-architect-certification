@@ -6,6 +6,68 @@
 
 == Associated Certification
 
+
+****
+
+.Practice Exams
+[%header,cols=2*]
+|===
+|Question
+|Answer
+
+| A solutions architect is required to move 750 TB of data from a branch office's network-attached file system to Amazon S3 Glacier.
+| Order 10 Snowball appliances and select S3 bucket to the destination
+
+| HPC workload will use many Amazon EC2 instances and will generate a large quantity of small output files that must be stored in persistent storage for future use
+|Fsx For lustre with S3
+
+| The website’s users are located around the world and the solutions architect needs to optimize the performance for both the real-time and on-demand streaming.
+|Cloudfront
+
+| Amazon S3 bucket configured as an origin for an Amazon CloudFront distribution. Access to the static content must be restricted to the same set of IP addresses.
+| Create origin access OAI and associate it with the distribution, change the permission in the bucket / Create a WAF web acl that includes the same IP restrictions associated with Cloudfront
+
+| Amazon S3 bucket. The data is analyzed for the first week and then must remain immediately available for occasional analysis
+| Configure lifecycle policy to transition the object to S2 Standard-Infrequent Access (S3 Standard-IA) after 30 days
+
+| All levels of stored data must be audited under a new regulation which the company adheres to.
+| Use storage Gateway to move existing data to S3. use CloutTrail to log management events
+
+|Amazon Elastic File System (Amazon EFS). Which of the following performance modes should be used for Amazon EFS to address this requirement
+|Max I/O
+
+|The engineering team wants to decouple the user authentication process
+|Cognito Authentication via Cognito User Pools ALB
+
+| Distributed File System Replication (DFSR) service to keep files synchronized on multiple Windows servers, and would like to migrate to AWS cloud.
+
+What do you recommend as a replacement for the DFSR?
+
+|FSx for Windows File Server
+
+|in a hub-and-spoke style using the AWS Transit Gateway
+|Build a Shared services Virtual Private Cloud
+
+|administrator has created a private hosted zone and associated it with a Virtual Private Cloud (VPC). However, the Domain Name System (DNS) queries for the private hosted zone remain unresolved
+|Enable DNS hostnames and DNS resolution for private hosted zones
+
+| team at a logistics company has noticed that the Auto Scaling group (ASG) is not terminating an unhealthy Amazon EC2 instance
+| The health grace period, for instance
+
+THe instance has failed the ELB health check status
+
+The instance maybe in impaired status
+
+|, the root volume of an Amazon EC2 instance for an EBS-backed AMI is deleted when the instance terminates.
+|Set DeleteOnTermination attribute to false
+
+|The IoT data is funneled into Amazon Kinesis Data Streams which further acts as the source of a delivery stream for Amazon Kinesis Firehose
+|Kinesis Agent cannot write to Amazon Kinesis Firehose for which the delivery stream source is already set Kinesis DatStream
+
+|===
+
+****
+
 === Classic Solutions Architecture
 
 .WhatsTheTime App
@@ -13,7 +75,6 @@ image::../thumbs/images/saa_certificate_solutions_whatisthetime.png[]
 
 .MyClothes App
 image::../thumbs/images/saa_certificate_solutions-myclothes.app.png[]
-
 
 === Serverless Architecture
 
@@ -46,7 +107,6 @@ image::../thumbs/images/ServerlessWebSiteStreamDyanmo.png[]
 
 ** To cloudfront ca use transfer acceleration whe uploaded a photo, and trigger a lambda to generate and the thumb and sns to email
 ****
-
 
 === Concepts
 
@@ -169,7 +229,21 @@ arn:aws:iam:855174569821:user/dougdb
 }
 ----
 
-* Identity-based vs Resource-based policies: Identity-based JSOn Documents that control what actions an #identity# can perform, can be inline (exclusive to group/user/role) or managed by AWS can be reused by the same inline group; Resource-based are the JSON Policy Document attached to an AWS Resource such as S3, Resource-based grants the specified #Principal#, kinds of specific permission can perform on the resource (S3), a IAM Role use both identity and resource policies
+
+==== Identity-based Policies vs Resource-based Policies
+
+*Identity-based* policies are attached to an IAM user, group, or role. These policies let you specify what that identity can do (its permissions). For example, you can attach the policy to the IAM user named John, stating that he is allowed to perform the Amazon EC2 RunInstances action. The policy could further state that John is allowed to get items from an Amazon DynamoDB table named MyCompany.
+
+*Resource-based* policies are attached to a resource. For example, you can attach resource-based policies to Amazon S3 buckets, Amazon SQS queues, VPC endpoints, and AWS Key Management Service encryption keys. For a list of services that support resource-based policies.
+
+With resource-based policies, you can specify who has access to the resource and what actions they can perform on it. To learn whether principals in accounts outside your zone of trust (trusted organization or account) have access to assume your roles. Resource-based policies are inline only, not managed.
+
+* See more details in https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_identity-vs-resource.html[Identity-based policies and resource-based policies]
+
+* Cross-account scenarios we have two scenarios, first, attach a resource-based policy to a resources (S3), or, secondly, use a role as proxy, 1. (User/AccountA -> User/AccountB (owner assuming role) -> access S3) | 2. (User/AccountA through a bucket policy access S3), the difference between these two situations is, when you assume a role (app, user or service) you give up your original permission and take the permissions assigned to the role, when we are using resource-based policy the principal doesn't have to give up his permission, e.g; (User/AccountA -> Dump DynamoDB -> dump -> Account/B S3), in this case we should use a resource based policy
+
+
+* More details see https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic.html#policy-eval-basics[Policy evaluation logic]
 
 .Resource Policy for a Principal
 [source,json]
@@ -250,6 +324,38 @@ image::../thumbs/images/theIAMRole.png[]
 - IAM Credentials Report is a Security Tool
 
 -  https://policysim.aws.amazon.com/[Policy Simulator]
+
+
+==== IAM Advanced
+
+* AWS Organizations is a global service that allows to manage multiple AWS accounts,
+* The main account is the management account; the billing is consolidated across all accounts, single payment method
+** Advantages: Cloudtrail on all accounts. send logs to central s3 accounts, cloudwatch logs to a central logging account, establish cross-account roles for Admin purposes
+* SCP Service Control Police, with IAM policies applied to OU or Accounts to restrict Users and Roles
+* #No SCP can be applied in the Management Account, it can do anything#
+
+
+.SCP Blocklist and Allowlist Sample
+[source, json]
+----
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowAllActions",
+      "Effect": "Allow",
+      "Action": "*",
+      "Resource": "*"
+    },
+    {
+      "Sid": "DenyDynamoDB",
+      "Effect": "Deny",
+      "Action": "dynamodb:*",
+      "Resource": "*"
+    }
+  ]
+}
+----
 
 === EC2 Fundamentals
 
@@ -778,199 +884,6 @@ resource "aws_route53_record" "www" {
 
 * Route53 queries is not the same as ALB routing the traffic, DNS doesn't rout any traffic, it only responds to the DNS queries, if multiple values were specified in the same record, a random address will be chose
 
-=== S3 Introduction
-
-* One of the building blocks of AWS, advertised as _"infinite scaling"_ storage, backup, archive and hybrid cloud storage, static websites are one of the common use cases
-
-* Buckets must have a globally unique name (across all regions all accounts), they are defined at the region level
-
-* Objects (files) have a key, key is the full path s3://my-bucket/my_file.txt Or s3://my-bucket/#*my_folder/my_another_folder/my_file.txt*# the key will be the full_path (yellow highlighted), composed by prefix + object name, everything and anything are actually a key
-
-* Max size by object is 5TB (5000 GB), but if more than 5TB, must be use 'multi-part upload'
-.Sample use S3 API using AWS CLI
-
-[source,bash]
-----
-aws s3api list-buckets
-----
-.S3 TF Creation Sample
-[source,hcl-terraform]
-----
-
-resource "aws_s3_object" "my_bucket" {
-    bucket = "myUniqueGlobalName-bucket"
-    acl    = false # fine grain security rules
-    tags = {
-      Name = "Bucket Tag"
-      Environment = "Dev"
-    }
-}
-
-
-# Json Polices 4Public access
-resource "aws_s3_bucket_policy" "my_bucket_policy" {
-  bucket = aws_s3_bucket.my_bucket.id
-
-  policy = <<POLICY
-{
-  "Version": "2012-10-17",
-  "Id": "my_bucket",
-  "Statement": [
-    {
-      "Sid": "PublicRead",
-      "Effect": "Allow",
-      "Principal": "*",
-      "Action": [
-        "s3:GetObject"
-      ],
-      "Resource": "arn:aws:s3:::my_bucket/*",
-    }
-  ]
-}
-POLICY
-}
-----
-
-* By default, public access will be denied, S3 buckets are crated with pre-signed url Ec2 will need EC2 instance roles with IAM permissions to access any s3 bucket, or CORs can be enabled by the security policies
-
-* S3 Storage classes list: _Standard, Standard IA, Intelligent Tiering, One-Zone IA, Glacier Instant Retrieval Glacier Flexible Retrieval, Glacier Deep Archive_ in general, infrequently access object, move to Standard IA, and no fast access move to Glacier or Glacier Deep Archive
-
-* In general bucket owners pay for all S3 storage and data transfer, with requester (download side) plan the requester pays the cost instead of the owner
-
-* Multi-part upload is recommended for file > 100Mb and must be for file > 5GB, for big file we can split the upload (parallel upload actions)
-
-****
-Q: You are looking to build an index of your files in S3, using Amazon RDS PostgreSQL.
-To build this index, it is necessary to read the first 250 bytes of each object in S3, which contains some metadata about the content of the file itself.
-There are over 100,000 files in your S3 bucket, amounting to 50 TB of data.
-How can you build this index efficiently?
-
-A: Create an app that will traverse the S3 bucket, issue a _Byte Range Fetch_ for the first 250 bytes, and store that info in RDS
-****
-
-* S3 objects can be encrypted using one of 4 methods, SSE (Server-side Encryption) SSE with KMS Keys Stored and Custom Provided Keys SSE-C
-
-* The KMS Limit may impact SSE-KMS limitations, when uploading call the _GeneratedDataKey KMS_ will be invoked
-
-* _DSSE-KMS is just "double encryption based on KMS"_
-
-.S3 Force Encryption in Transit, Bucket policy
-[source,json]
-----
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Deny",
-      "Principal": "*",
-      "Action": "s3:GetObject",
-      "Resource": "arn:aws:s3::my-bucket/*",
-      "Condition": [
-        {
-          "Bool": {
-            "aws:SecureTransport": "false"
-          }
-        },
-        {
-          "StringNotEquals": {
-            "s3:x-amz-server-side-encryption": "aws:kmz"
-          }
-        },
-        {
-          "Null": {
-            "s3:x-amz-server-side-encryption-customer-algorithm": "true"
-          }
-        }
-      ]
-    }
-  ]
-}
-----
-
-==== S3 CORS
-
-* Cross-Origin Resource Sharing over S3 objects, scheme/host/port - in https/domain needs to be configured to allow web browser requests the origin over objects, enabling the correct CORS Headers
-
-==== S3 Pre-signed URLs
-
-* Allows accessing objects using temp permissions and actions
-
-==== S3 Access Points
-
-* Allows organizing objects/keys through by POLICY R/W to /finance prefix, for example, giving "finance" or other domain, access point
-* We can define the access pint to be accessible only from within the VPC, using VPC endpoint to access the access point the policy of VPC Endpoint must allow access to the target bucket
-
-.VPC Endpoint IAM Policy Sample
-[source,json]
-----
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": "*",
-      "Action": "s3:GetObject",
-      "Resource": [
-        "arn:aws:s3:::my-bucket/*",
-        "arn:aws:s3:sa-east-1:12345679:accesspoint/my-vpc/object/*"
-      ]
-    }
-  ]
-}
-----
-
-==== S3 Object Lambda
-
-* Allows changing/enriched the object before it is retrieved by the caller apps, using S3 access point
-* OAC can enhance S3 access content, and can be used as an ingress to upload files to S3
-
-.S3 Object Lambda and Apache Camel Solution
-image::../thumbs/images/S3ObjectLambda.png[]
-
-=== S3 Storage Class
-
-* S3 Standard - General Purpose; Availability 99.99%l, for frequentely accessed data, with low latency and high throughput
-
-* S3 Standard - Infrequent Access (IA); when data is less frequently accessed, but requires rapid access when needed, lower cost than S3 standard
-
-* S3 One Zone Infrequent Access; Indicated to Disaster discovery backups
-
-* S3 Glacier Instant Retrieval; to data access once a quarter
-
-* S3 Glacier Flexible Retrieval; Expedited 1 to 5 min, standard 3 to 5 hours, bulk 5 to 12 hours
-
-* S3 Glacier Deep Archive
-
-* S3 Intelligent Tiering; Moves objects automatically between Access Tiers based on usage
-
-=== AWS CloudFront
-
-* Content Delivery Network (CDN), improves the read actions with cached content, with global edge locations, DDoS protected integrated with Shield and AWS WEB App Firewall
-
-* Cache invalidation can be forced entire or partial
-
-=== AWS Snow Family
-
-* High-secure, portable devices to collect and process data at the edge of data migration
-
-* Storage Gateway to hybrid Cloud, part of infra in cloud and another on-premises
-
-==== Storage Comparison
-
-. S3: Object Storage
-. S3 Glacier: Object Archival
-. EBS Volumes: Network storage for one EC2 instance at a time
-. Instance Storage: Physical storage for your EC2 instance high IOPS
-. EFS: Network file System Linux instance, POSIX filesystem
-. FSx 4Windows: Network file system for Windows Server
-. FSx 4Lustre: High Performance Computing Linux File system
-. FSx 4NetApp ONTAP: High-OS Compatibility
-. FSx 4OpenZFS Mange ZFS file System
-. Storage Gateway: S3 & FSx File Gateway
-. Transfer Family: FTP, FTPs, SFTP interface on top Amazon S3 or EFS
-. DataSync: Schedule data sync from on-premises to AWS
-. Snowcone/Snowball/Snowmobile: to move large amount of data to the cloud, physically
-
 === Decoupling Apps with Messaging
 
 ==== SQS
@@ -994,7 +907,7 @@ waitTimeSeconds (consumer): Duration in seconds (0 to 20) that the ReceiveMessag
 
 * SQS as a buffer to database writes is common pattern to no loose transactions
 
-=== SNS
+==== SNS
 
 * SNS works like broadcast to message, when a lot of consumer needs of the same message for different purposes
 
@@ -1002,13 +915,13 @@ waitTimeSeconds (consumer): Duration in seconds (0 to 20) that the ReceiveMessag
 
 * SNS can filter a message based on JSOn Policies
 
-=== Kinesis
+==== Kinesis
 
 * Responsible for _collect, process and analyze_ streaming data in real-time, suc logs, metrics website and clickstreams IoT telemetry data...
 
 * Shards is like Kafka partitions
 
-=== Amazon MQ
+==== Amazon MQ
 
 * Traditional apps are running from on-premises may use open protocols such as MQTT, AMQP, STOMP etc. it does scale at the same proposition as SNS,SQS, and the MQ high availability will be crafted by multi zone
 
@@ -1136,3 +1049,258 @@ image::../thumbs/images/ECSTaskEventBrigdeUploadFileSolution.png[]
 * AWS Redshift is based on Postgres, but it's not used for OLTP, but OLAP online analytical processing (analytics and warehousing), with 10x better performance that other data warehouses
 
 * AWS Glue is an ETL managed Service useful to prepare and transform data for analytics
+
+=== Monitoring & Audit with CloudWatch and CloudTrail
+
+* Cloudwatch provides metrics for *EVERY* service in AWS
+
+* Can create CloudWatch dashboards of metrics and Cloudwatch Custom Metrics (RAM metrics)
+
+* Cloudwatch metrics Streams near real-time delivery and low latency with Kinesis Data Firehouse and the its destinations
+
+* Cloudwatch logs are classified in groups (arbitrary name, usually representing an app) or stream (representing instances within app / log files / containers), we can define log expiration policies
+
+* Cloudwatch can aggregate data from different regions/accounts based on subscription filter combining kinesis data stream with kinesis firehouse and a destination, always near real time
+
+* By default, no logs from EC2 machine go to Cloudwatch; we need to enable Cloudwatch agent on EC2, to push log files you want
+
+=== AWS Organization
+
+* Allows consolidating multiple AWS accounts into an organization, includes root accounts and organizations units
+* Police are applied to tp root accounts or OUs
+
+* Consolidated accounts contain, paying accounts (independent and cannot resources of other accounts) / linked accounts - all linked accounts are independent
+
+=== #*!!! Virtual Private Cloud (VPC) !!!*#
+
+* What is a region? A physical location in the world and is independent of other regions, in a region we can have one or more Zones that is one or more data centers, that means that you've lots of redundancy within a region
+
+* Every region is *Connected* via a high bandwidth with a fully redundant network, and we can deploy your applications across
+
+.Amazon VPC Components
+[%header,cols=2*]
+|===
+|VPC Component
+|What it is
+
+|Virtual Private Cloud (VPC)
+|A logically isolated virtual network in the AWS cloud
+
+|Subnet
+|A segment of a VPC's IP address range where u can *place groups of isolated resources*
+
+|Internet Gateway/Egress only Internet Gateway
+|The amazon VPC side of a connection of the public internet IPv4/IPv6
+
+|Router
+|Routers interconnect subnets and direct the traffic between internet gateways, virtual private gateways, NAT gateways and subnets
+
+|Peering Connection
+|Direct connection between two VPCs
+
+|VPC Endpoint
+|Private Connection to public AWS Services
+
+|NAT Instance
+|Enables internet access for EC2 instances in private subnets managed by u
+
+|NAT Gateway
+|Enables internet access for EC2 instances in private subnets managed by AWS
+
+|Virtual Private Gateway
+|The amazon VPC side of VPN connection
+
+|Customer Gateway
+|Customer side of a VPN Connection
+
+|AWS Direct Connect
+|High speed, high bandwidth, private network connection from customer to aws
+
+|Security Group
+|Instance-level firewall
+
+|Network ACL
+|Subnet-level firewall
+
+|===
+
+
+.Security Groups Rules
+[%header,cols=4*]
+|===
+|Type
+|Protocol
+|Port range
+|Source
+
+|SSH
+|TCP
+|22
+|0.0.0.0/0
+
+|RDP
+|TCP
+|3389
+|0.0.0.0/0
+
+|RDP
+|TCP
+|3389
+|::/0
+
+|HTTPS
+|TCP
+|443
+|0.0.0.0/0
+
+|HTTPS
+|TCP
+|443
+|::/0
+
+|All ICMP - IPv4
+|ICMP
+|All
+|0.0.0.0/0
+|===
+
+.Network Inbound/Outbound Rules
+[%header,cols=4*]
+|===
+|Rule
+|Type
+|Protocol
+|Port Range
+|Source
+|Allow/Deny
+
+|100
+|All Traffic
+|ALL
+|ALL
+|0.0.0.0/0
+|ALLOW
+
+|101
+|All Traffic
+|ALL
+|ALL
+|::/0
+|ALLOW
+
+|*
+|All Traffic
+|ALL
+|ALL
+|::/0
+|DENY
+
+|*
+|All Traffic
+|ALL
+|ALL
+|0.0.0.0/0
+|DENY
+
+|===
+
+.VPC Architecture Definitions
+image::../thumbs/images/VPC_full-arch.drawio.png[]
+
+* VPC Flow Logs is a capture of information about IP traffic going to and from network interface in a VPC, all flow logs are stored using Cloudwatch Logs or S3, we can create using the levels.
+
+.. VPC
+.. Subnet
+.. Network Interfaces
+
+== Amazon Simple Storage Service (S3)
+
+
+.S3 Storage Classes Durability and Availability
+[%header,cols=2*]
+|===
+|Durability Protection against
+|Availability is measurement
+
+|Data loss
+|The amount of time the data is available to you, e.g.: 99.99%
+
+|Data corruption
+|Express as a percentage of time per year
+
+|S3 offers 11 9s durability (99.999999999), it means if you store 10 million objects, then you expect to lose one object every 10,000 years!
+|
+
+|===
+
+.S3 Storage Classes
+image::../thumbs/images/S3-Storage-Classes-Performance.png[]
+
+.S3 Bucket policy document sample
+[source, json]
+----
+{
+  "Version": "2012-10-17",
+  "Id": "Policy1561964",
+  "Statement": [
+    {
+      "Sid": "Stmt123342232",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::551112134123:user/Paul"
+      },
+      "Action": "s3:*",
+      "Resource": "arn:aws:s3:::mybucket"
+    }
+  ]
+}
+----
+
+.Sample use S3 API using AWS CLI
+[source,bash]
+----
+aws s3api list-buckets
+----
+
+.S3 TF Creation Sample
+[source,hcl-terraform]
+----
+
+resource "aws_s3_object" "my_bucket" {
+    bucket = "myUniqueGlobalName-bucket"
+    acl    = false # fine grain security rules
+    tags = {
+      Name = "Bucket Tag"
+      Environment = "Dev"
+    }
+}
+
+
+# Json Polices 4Public access
+resource "aws_s3_bucket_policy" "my_bucket_policy" {
+  bucket = aws_s3_bucket.my_bucket.id
+
+  policy = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Id": "my_bucket",
+  "Statement": [
+    {
+      "Sid": "PublicRead",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": [
+        "s3:GetObject"
+      ],
+      "Resource": "arn:aws:s3:::my_bucket/*",
+    }
+  ]
+}
+POLICY
+}
+----
+
+
+
+.S3 Object Lambda and Apache Camel Solution
+image::../thumbs/images/S3ObjectLambda.png[]
