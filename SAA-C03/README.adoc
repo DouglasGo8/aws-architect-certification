@@ -6,7 +6,6 @@
 
 == Associated Certification
 
-
 ****
 
 .Practice Exams
@@ -15,54 +14,9 @@
 |Question
 |Answer
 
-| A solutions architect is required to move 750 TB of data from a branch office's network-attached file system to Amazon S3 Glacier.
-| Order 10 Snowball appliances and select S3 bucket to the destination
+|A telecommunication company has an API that allows users to manage their mobile plans and services. The API experiences significant traffic spikes during specific times such as end of the month and special offer periods. The company needs to ensure low latency response time consistently to ensure a good user experience. The solution should also minimize operational overhead.
+|Use AWS Api Gateway along with AWS Lambda functions with provisioned concurrency
 
-| HPC workload will use many Amazon EC2 instances and will generate a large quantity of small output files that must be stored in persistent storage for future use
-|Fsx For lustre with S3
-
-| The website’s users are located around the world and the solutions architect needs to optimize the performance for both the real-time and on-demand streaming.
-|Cloudfront
-
-| Amazon S3 bucket configured as an origin for an Amazon CloudFront distribution. Access to the static content must be restricted to the same set of IP addresses.
-| Create origin access OAI and associate it with the distribution, change the permission in the bucket / Create a WAF web acl that includes the same IP restrictions associated with Cloudfront
-
-| Amazon S3 bucket. The data is analyzed for the first week and then must remain immediately available for occasional analysis
-| Configure lifecycle policy to transition the object to S2 Standard-Infrequent Access (S3 Standard-IA) after 30 days
-
-| All levels of stored data must be audited under a new regulation which the company adheres to.
-| Use storage Gateway to move existing data to S3. use CloutTrail to log management events
-
-|Amazon Elastic File System (Amazon EFS). Which of the following performance modes should be used for Amazon EFS to address this requirement
-|Max I/O
-
-|The engineering team wants to decouple the user authentication process
-|Cognito Authentication via Cognito User Pools ALB
-
-| Distributed File System Replication (DFSR) service to keep files synchronized on multiple Windows servers, and would like to migrate to AWS cloud.
-
-What do you recommend as a replacement for the DFSR?
-
-|FSx for Windows File Server
-
-|in a hub-and-spoke style using the AWS Transit Gateway
-|Build a Shared services Virtual Private Cloud
-
-|administrator has created a private hosted zone and associated it with a Virtual Private Cloud (VPC). However, the Domain Name System (DNS) queries for the private hosted zone remain unresolved
-|Enable DNS hostnames and DNS resolution for private hosted zones
-
-| team at a logistics company has noticed that the Auto Scaling group (ASG) is not terminating an unhealthy Amazon EC2 instance
-| The health grace period, for instance
-
-THe instance has failed the ELB health check status
-
-The instance maybe in impaired status
-
-|, the root volume of an Amazon EC2 instance for an EBS-backed AMI is deleted when the instance terminates.
-|Set DeleteOnTermination attribute to false
-
-|The IoT data is funneled into Amazon Kinesis Data Streams which further acts as the source of a delivery stream for Amazon Kinesis Firehose
-|Kinesis Agent cannot write to Amazon Kinesis Firehose for which the delivery stream source is already set Kinesis DatStream
 
 |===
 
@@ -925,7 +879,7 @@ waitTimeSeconds (consumer): Duration in seconds (0 to 20) that the ReceiveMessag
 
 * Traditional apps are running from on-premises may use open protocols such as MQTT, AMQP, STOMP etc. it does scale at the same proposition as SNS,SQS, and the MQ high availability will be crafted by multi zone
 
-== Containers on ECS Fargate ECR and EKS
+=== Containers on ECS Fargate ECR and EKS
 
 * Docker is software to run apps; Docker images are stored in Docker Repositories
 
@@ -952,7 +906,7 @@ image::../thumbs/images/ECSTaskEventBrigdeUploadFileSolution.png[]
 
 * AppRunner is a fully managed service that makes it easy to deploy web apps and apis at scale, no infrastructure required, started by source code or container
 
-== Serverless
+=== Serverless
 
 * A new paradigm in which the developers don't have to manage servers anymore
 * Initially... Serverless == FaaS (Function as a Service)
@@ -979,7 +933,7 @@ image::../thumbs/images/ECSTaskEventBrigdeUploadFileSolution.png[]
 * Run on-demand
 * Scaling is automated
 
-=== Lambda Limits - per Region
+==== Lambda Limits - per Region
 
 * Memory allocation 128MB up to 10GB (1MB increments)
 * Maximum execution time 900 seconds (15Min)
@@ -1018,7 +972,7 @@ image::../thumbs/images/ECSTaskEventBrigdeUploadFileSolution.png[]
 
 * DynamoDB Streams allows you to capture a time-ordered sequence of item-level modifications in a DynamoDB table. It's integrated with AWS Lambda so that you create triggers that automatically respond to events in real-time.
 
-== Database AWS Solutions
+=== Database AWS Solutions
 
 * RDBMS (SQL/OLTP); RDS, Aurora, great for Joins
 .. Auto-scaling capability for storage
@@ -1039,7 +993,6 @@ image::../thumbs/images/ECSTaskEventBrigdeUploadFileSolution.png[]
 * Ledger; Amazon Quantum Ledger Database
 
 * Time series Amazon Timestream
-
 
 === Data & Analytics
 
@@ -1213,8 +1166,10 @@ image::../thumbs/images/VPC_full-arch.drawio.png[]
 .. Subnet
 .. Network Interfaces
 
-== Amazon Simple Storage Service (S3)
+=== Amazon Simple Storage Service (S3)
 
+.AWS Simple Storage Service
+image::../thumbs/images/AWS_SimpleStorageService.png[]
 
 .S3 Storage Classes Durability and Availability
 [%header,cols=2*]
@@ -1304,3 +1259,38 @@ POLICY
 
 .S3 Object Lambda and Apache Camel Solution
 image::../thumbs/images/S3ObjectLambda.png[]
+
+=== AWS Security
+
+* Encryption/Decryption in flight (TLS/SSL), ensures no MITM (man on the middle) can stolen the data
+* Server-side encryption at rest, means data is encrypted after being received by the server,
+** Data is decrypted before being sent, and stored in a encrypted form thanks to a key
+** The encryption/decryption keys must be managed for somewhere
+* Client-side encryption, means that the data is encrypted by the client and never decrypted by the server
+** Data will be decrypted by a receiving client
+** The server should not be able to decrypt the data
+
+==== AWS KMS
+
+* Encryption in AWS means, in most part of the time, KMS
+* AWS will manages the encryption keys for us, and is fully integrated with IAM for auth
+* KMS provides two types of keys, Symmetric AES-256 keys, means single encryption key that is used to encrypt and decrypt
+** Any service that are integrated with KMS use Symmetric CMKs
+* The second key is Asymmetric (RSA & ECC key pairs),
+** Public (Encrypt) and Private Key (decrypt)
+** Can download the public key, but *never* the private key
+* Types of Keys
+** AWS Owned keys (SSE-S3, SSE-SQS,SSE-DDB) (default-key)
+** AWS Managed key (aws/service-name e.g: aws/ebs)
+
+.KMS encrypt/decrypt usage sample
+[source, bash]
+----
+aws kms encrypt --key-id alias/foo --plaintext fileb://secret.dat --output text --query ChiphertextBlob --region- sa-east-1 > encrypted_secretFile.base64
+
+cat  encrypted_secretFile.base64 | base64 decode > encrypted_secretFile
+
+aws kms decrypt --key-id --ciphertext-blob fileb://encrypted_secretFile --output text --query Plaintext > decrypted_secretFile.base64 --region sa-east-1
+----
+
+* SSM Parameter Store to secure storage configuration and secrets, optional Seamless encryption using KMS, serverless scalable durable and easy SDK
