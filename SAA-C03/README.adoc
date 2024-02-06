@@ -17,10 +17,35 @@
 |A telecommunication company has an API that allows users to manage their mobile plans and services. The API experiences significant traffic spikes during specific times such as end of the month and special offer periods. The company needs to ensure low latency response time consistently to ensure a good user experience. The solution should also minimize operational overhead.
 |Use AWS Api Gateway along with AWS Lambda functions with provisioned concurrency
 
+|The engineering team at a logistics company has noticed that the Auto Scaling group (ASG) is not terminating an unhealthy Amazon EC2 instance.
 
+As a Solutions Architect, which of the following options would you suggest to troubleshoot the issue?
+| The health check grace period, for instance, has not expired
+
+The instance maybe in impaired status
+
+The instance has failed the ELB health check status
 |===
 
 ****
+
+****
+.All Exam solutions that will be implemented
+[%header,cols=2]
+|===
+|Description
+|Stack
+|A media company is setting up an ECS batch architecture for its image processing application. It will be hosted in an Amazon ECS Cluster with two ECS tasks that will handle image uploads from the users and image processing. The first ECS task will process the user requests, store the image in an S3 input bucket, and push a message to a queue. The second task reads from the queue, parses the message containing the object name, and then downloads the object. Once the image is processed and transformed, it will upload the objects to the S3 output bucket. To complete the architecture, the Solutions Architect must create a queue and the necessary IAM permissions for the ECS tasks.
+|Quarkus, Camel and TF to launch a new SQS queue, configuring a seconds ECS Task to read from it, IAM roles with ECS Task can assume in order to get access S3 buckets with taskRoleArn
+|===
+****
+
+Control list of Exams
+
+Marek Exam 2 (attempt x)
+Davis Exam 2 (attempt x)
+Bonso  Exam 2 (attempt x)
+
 
 === Classic Solutions Architecture
 
@@ -89,7 +114,7 @@ image::../thumbs/images/aws_history_timeline.png[]
 
 === IAM & Fundamentals
 
-* IAM (_Identity and Access Management_) is as global service, identities can be classified as humans and non-humans, it is  service get authenticated and authorized to acess resources
+* IAM (_Identity and Access Management_) is as global service, identities can be classified as humans and non-humans, it is service get authenticated and authorized to acess resources
 
 * Root account created by default, but never ever should be used or shared
 
@@ -102,7 +127,6 @@ image::../thumbs/images/aws_history_timeline.png[]
 * Always apply the [.underline]#*_least privilege principle_*#, that means, don't give more or any permissions that a user really needs
 
 * Policies in a group will be applied in everyone inside this group
-
 
 .IAM Policy Structure
 [source,json]
@@ -172,7 +196,7 @@ arn:aws:iam:855174569821:user/dougdb
 * Instance Profile: based on AWS STS (Security Token Service), e.g.: an EC2 instance needs access S3 bucket, for this to EC2 get authorized we never can store _Credentials or Secret Keys in instance_ the correct is use the instance profile and attach _IAM role_ to the instance, EC2 will th attempt to assume the role using STS Assume Role API Calls, by a specific policy called _Trust Policy_, composed by a _Permission Policy_ that classify which actions can be made in this bucket, the trust policy control can assume the role based on a STS temporary security credentials provided to EC2
 
 .Instance Profile on Trust Policy STS
-[source, json]
+[source,json]
 ----
 {
   "Effect": "Allow",
@@ -183,14 +207,20 @@ arn:aws:iam:855174569821:user/dougdb
 }
 ----
 
-
 ==== Identity-based Policies vs Resource-based Policies
 
-*Identity-based* policies are attached to an IAM user, group, or role. These policies let you specify what that identity can do (its permissions). For example, you can attach the policy to the IAM user named John, stating that he is allowed to perform the Amazon EC2 RunInstances action. The policy could further state that John is allowed to get items from an Amazon DynamoDB table named MyCompany.
+*Identity-based* policies are attached to an IAM user, group, or role.
+These policies let you specify what that identity can do (its permissions).
+For example, you can attach the policy to the IAM user named John, stating that he is allowed to perform the Amazon EC2 RunInstances action.
+The policy could further state that John is allowed to get items from an Amazon DynamoDB table named MyCompany.
 
-*Resource-based* policies are attached to a resource. For example, you can attach resource-based policies to Amazon S3 buckets, Amazon SQS queues, VPC endpoints, and AWS Key Management Service encryption keys. For a list of services that support resource-based policies.
+*Resource-based* policies are attached to a resource.
+For example, you can attach resource-based policies to Amazon S3 buckets, Amazon SQS queues, VPC endpoints, and AWS Key Management Service encryption keys.
+For a list of services that support resource-based policies.
 
-With resource-based policies, you can specify who has access to the resource and what actions they can perform on it. To learn whether principals in accounts outside your zone of trust (trusted organization or account) have access to assume your roles. Resource-based policies are inline only, not managed.
+With resource-based policies, you can specify who has access to the resource and what actions they can perform on it.
+To learn whether principals in accounts outside your zone of trust (trusted organization or account) have access to assume your roles.
+Resource-based policies are inline only, not managed.
 
 * See more details in https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_identity-vs-resource.html[Identity-based policies and resource-based policies]
 
@@ -226,7 +256,7 @@ With resource-based policies, you can specify who has access to the resource and
 * Permission Boundaries: sets the maximum available permissions an Identity can have, Privilege escalation must be avoided using permission boundaries
 
 .Permission Boundaries
-[source, json]
+[source,json]
 ----
 {
   "Version": "2012-10-17",
@@ -243,7 +273,6 @@ With resource-based policies, you can specify who has access to the resource and
   ]
 }
 ----
-
 
 image::../thumbs/images/theIAMRole.png[]
 
@@ -277,8 +306,7 @@ image::../thumbs/images/theIAMRole.png[]
 
 - IAM Credentials Report is a Security Tool
 
--  https://policysim.aws.amazon.com/[Policy Simulator]
-
+- https://policysim.aws.amazon.com/[Policy Simulator]
 
 ==== IAM Advanced
 
@@ -288,9 +316,8 @@ image::../thumbs/images/theIAMRole.png[]
 * SCP Service Control Police, with IAM policies applied to OU or Accounts to restrict Users and Roles
 * #No SCP can be applied in the Management Account, it can do anything#
 
-
 .SCP Blocklist and Allowlist Sample
-[source, json]
+[source,json]
 ----
 {
   "Version": "2012-10-17",
@@ -438,7 +465,7 @@ The same application spread out in different instances can be accessed/tied usin
 * ENIs and EPIs can be _remapped_ to different instances
 
 .Using ENI Concept Attach in
-image::../thumbs/images/AWS_ENI_Concept.png[ENI, 200,100, role=right]
+image::../thumbs/images/AWS_ENI_Concept.png[ENI,200,100,role=right]
 
 === NAT Gateways and NAT Instances
 
@@ -521,9 +548,7 @@ resource "aws_ebs_volume" "ebs" {
 
 * Deregistration delay - ALB & NLB, time to complete _in-flight requests_ while the instance is unregistering or unhelthy
 
-* ALB operates at the request level, routes based on content of request #(layer 7)#,
-supports routing based on path, host, source-ip address and query-string,
-supports EC2 Instances, IP Addresses, lambda function and containers as targets
+* ALB operates at the request level, routes based on content of request #(layer 7)#, supports routing based on path, host, source-ip address and query-string, supports EC2 Instances, IP Addresses, lambda function and containers as targets
 
 * NLB operates at the connection level, routes connections based on IP protocol data #(layer 4)#, offers ultra-high performance, low latency and TLS offloading at scale, support static IP/Elastic IP, supports UDP and static IP addresses as targets
 
@@ -564,7 +589,6 @@ supports EC2 Instances, IP Addresses, lambda function and containers as targets
 |Load Balancer on target
 
 |===
-
 
 .Application Load Balancer Layer 7 sample, more details https://github.com/DouglasGo8/terraform-onreal-aws/blob/main/iac-aws/sre-ec2/alb[ALB TF]
 [source,hcl-terraform]
@@ -723,7 +747,8 @@ module "nlb-alb-microservice-quarkus.io-app" {
 * Supports auto instance scaling, based on events and load increase
 * There is a combination between ALBs and ASG over Scale-in and out.
 * Use launch-template (launch-configuration are deprecated)
-* Auto-scaling (in/out) can be based on CloudWatch alarms, ttps, avg. Of cpu
+* Auto-scaling (in/out) can be based on CloudWatch alarms, ttps, avg.
+Of cpu
 * Responds to EC2 status checks and Cloudwatch metrics
 * Can scale based on demand (performance) or on a schedule
 
@@ -772,8 +797,6 @@ IAM Instance profile
 
 User data
 ****
-
-
 
 ==== RDS & ElastiCache
 
@@ -941,7 +964,6 @@ image::../thumbs/images/ECSTaskEventBrigdeUploadFileSolution.png[]
 * Disk capacity in the "function container" (in /tmp) 512 to 10GB
 * Concurrency executions: 1000 p/s (can be increased)
 
-
 .CloudFront Functions vs Lambda@Edge - Use Cases
 [%header,cols=2*]
 |===
@@ -968,9 +990,11 @@ image::../thumbs/images/ECSTaskEventBrigdeUploadFileSolution.png[]
 
 === DynamoDb Notes
 
-* DynamoDB Accelerator (DAX) is a fully managed, highly available, in-memory cache for DynamoDB that delivers up to 10x performance improvement. It caches the most frequently used data, thus offloading the heavy reads on hot keys off your DynamoDB table, hence preventing the #"ProvisionedThroughputExceededException"# exception.
+* DynamoDB Accelerator (DAX) is a fully managed, highly available, in-memory cache for DynamoDB that delivers up to 10x performance improvement.
+It caches the most frequently used data, thus offloading the heavy reads on hot keys off your DynamoDB table, hence preventing the #"ProvisionedThroughputExceededException"# exception.
 
-* DynamoDB Streams allows you to capture a time-ordered sequence of item-level modifications in a DynamoDB table. It's integrated with AWS Lambda so that you create triggers that automatically respond to events in real-time.
+* DynamoDB Streams allows you to capture a time-ordered sequence of item-level modifications in a DynamoDB table.
+It's integrated with AWS Lambda so that you create triggers that automatically respond to events in real-time.
 
 === Database AWS Solutions
 
@@ -1026,9 +1050,72 @@ image::../thumbs/images/ECSTaskEventBrigdeUploadFileSolution.png[]
 
 === #*!!! Virtual Private Cloud (VPC) !!!*#
 
-* What is a region? A physical location in the world and is independent of other regions, in a region we can have one or more Zones that is one or more data centers, that means that you've lots of redundancy within a region
+* What is a region?
+A physical location in the world and is independent of other regions, in a region we can have one or more Zones that is one or more data centers, that means that you've lots of redundancy within a region
 
 * Every region is *Connected* via a high bandwidth with a fully redundant network, and we can deploy your applications across
+
+* We can have multiple VPCs in an AWS region (Max. 5 per region - soft limit), with CIDR per VPC is 5 too, min size is /28 (16 IP addresses), max size is /16 (65536 IP addresses)
+
+* VPC is private, so only the Private IPv4 ranges are allowed
+** 10.0.0.0 - 10.255.255.255 (10.0.0.0/8)
+** 172.16.0.0 0 - 172.31.255.255 (172.16.0.0/12)
+** 192.168.0.0 - 192.168.255.255 (192.168.0.0/16)
+
+.CIDR Calculation
+[%header,cols=3*]
+|===
+|Address
+|Base
+|Range
+
+|192.168.0.0
+|/32 => allows for 1 IP (2 pow 0)
+|192.168.0.0
+
+|192.168.0.0
+|/31 => allows for 2 IP (2 pow 1)
+|192.168.0.0 -> 192.168.0.1
+
+|192.168.0.0
+|/30 => allows for 4 IP (2 pow 2)
+|192.168.0.0 -> 192.168.0.3
+
+|192.168.0.0
+|/29 => allows for 16 IP (2 pow 3)
+|192.168.0.0 -> 192.168.0.7
+
+|192.168.0.0
+|/28 => allows for 32 IP (2 pow 4)
+|192.168.0.0 -> 192.168.0.15
+
+|192.168.0.0
+|/27 => allows for 32 IP (2 pow 5)
+|192.168.0.0 -> 192.168.0.31
+
+|192.168.0.0
+|/26 => allows for 64 IP (2 pow 6)
+|192.168.0.0 -> 192.168.0.63
+
+|192.168.0.0
+|/25 => allows for 128 IP (2 pow 7)
+|192.168.0.0 -> 192.168.0.127
+
+|192.168.0.0
+|/24 => allows for 256 IP (2 pow 8)
+|192.168.0.0 -> 192.168.0.255
+
+|192.168.0.0
+|/16 => allows for 65,536 IP (2 pow 16)
+|192.168.0.0 -> 192.168.255.255
+
+|192.168.0.0
+|/0 => allow for All IPs
+|0.0.0.0 -> 255.255.255.255
+
+|===
+
+
 
 .Amazon VPC Components
 [%header,cols=2*]
@@ -1076,7 +1163,6 @@ image::../thumbs/images/ECSTaskEventBrigdeUploadFileSolution.png[]
 |Subnet-level firewall
 
 |===
-
 
 .Security Groups Rules
 [%header,cols=4*]
@@ -1192,7 +1278,7 @@ image::../thumbs/images/AWS_SimpleStorageService.png[]
 image::../thumbs/images/S3-Storage-Classes-Performance.png[]
 
 .S3 Bucket policy document sample
-[source, json]
+[source,json]
 ----
 {
   "Version": "2012-10-17",
@@ -1255,8 +1341,6 @@ POLICY
 }
 ----
 
-
-
 .S3 Object Lambda and Apache Camel Solution
 image::../thumbs/images/S3ObjectLambda.png[]
 
@@ -1272,10 +1356,13 @@ image::../thumbs/images/S3ObjectLambda.png[]
 
 ==== AWS KMS
 
+.Copying snapshots across Regions
+image::../thumbs/images/KMS_Snapshot_across_region.drawio.png[]
+
 * Encryption in AWS means, in most part of the time, KMS
-* AWS will manages the encryption keys for us, and is fully integrated with IAM for auth
+* AWS will manage the encryption keys for us, and is fully integrated with IAM for auth
 * KMS provides two types of keys, Symmetric AES-256 keys, means single encryption key that is used to encrypt and decrypt
-** Any service that are integrated with KMS use Symmetric CMKs
+** Any service integrated with KMS use Symmetric CMKs
 * The second key is Asymmetric (RSA & ECC key pairs),
 ** Public (Encrypt) and Private Key (decrypt)
 ** Can download the public key, but *never* the private key
@@ -1284,7 +1371,8 @@ image::../thumbs/images/S3ObjectLambda.png[]
 ** AWS Managed key (aws/service-name e.g: aws/ebs)
 
 .KMS encrypt/decrypt usage sample
-[source, bash]
+
+[source,bash]
 ----
 aws kms encrypt --key-id alias/foo --plaintext fileb://secret.dat --output text --query ChiphertextBlob --region- sa-east-1 > encrypted_secretFile.base64
 
@@ -1293,4 +1381,34 @@ cat  encrypted_secretFile.base64 | base64 decode > encrypted_secretFile
 aws kms decrypt --key-id --ciphertext-blob fileb://encrypted_secretFile --output text --query Plaintext > decrypted_secretFile.base64 --region sa-east-1
 ----
 
-* SSM Parameter Store to secure storage configuration and secrets, optional Seamless encryption using KMS, serverless scalable durable and easy SDK
+* SSM Parameter Store to secure storage configuration and secrets, optional Seamless encryption using KMS, serverless scalable, durable and easy SDK
+
+* AWS Certificate Manager (ACM) can easily provide management and deployment over TLS certificates, providing in-flight encryption for websites (HTTPS), support both private and public certificates, and integrated with CLB, ALB and NLB, but not with EC2 (cannot be extracted)
+
+* To request public certificates we need list the domain names that must be included in the certificate, such as FQDN (corp.sample.com) or Wild Domain (*.example.com)
+
+* We can use AWS config to manage the rule named _acm-certificate-expiration-check_ to check for expiring certificates. If any certificate is deemed not compliant it will be sent to EventBridge that can trigger one of those services SQS, SNS or Lambda
+
+* An important rule to remember is that only in ALB we can set a redirection rule between HTTP and HTTPS
+
+.DDoS Best Practices
+image::../thumbs/images/ddos-resilient-ref-arch.png[]
+
+* Cloudfront cache static content and serve it from serve it from edge locations, protecting your backend
+
+* AWS WAF is used on top of Cloudfront and Application Load Balancer to filter and block requests based on request signatures
+
+* WAF rate-based rules can automatically block the IPs of bad actors
+
+* Use managed rules on WAF to block attacks based on an IP reputation, or block anonymous IPs
+
+* Cloudfront can block specific geographics
+
+* Shield in advanced scenarios automatic app layer DDoS mitigation automatically creates, evaluates and deploys AWS WAF rules, to mitigate layer 7 attacks
+
+
+* GuardDuty is an ML applying algorithms to protect AWS accounts
+
+
+
+
