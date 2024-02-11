@@ -19,24 +19,31 @@
 
 |The engineering team at a logistics company has noticed that the Auto Scaling group (ASG) is not terminating an unhealthy Amazon EC2 instance.
 
-As a Solutions Architect, which of the following options would you suggest to troubleshoot the issue?
+As a Solution Architect, which of the following options would you suggest to troubleshoot the issue?
 | The health check grace period, for instance, has not expired
 
 The instance maybe in impaired status
 
 The instance has failed the ELB health check status
+
+|A tech company that you are working for has undertaken a Total Cost Of Ownership (TCO) analysis evaluating the use of Amazon S3 versus acquiring more storage hardware. The result was that all 1200 employees would be granted access to use Amazon S3 for the storage of their personal documents.
+
+Which of the following will you need to consider so you can set up a solution that incorporates a single sign-on feature from your corporate AD or LDAP directory and also restricts access for each individual user to a designated user folder in an S3 bucket
+|Set up a Federation proxy or and Identity Provider, and use AWS STS to generate temporary tokens
+Configure an IAM role and an IAM Policy to access the bucket
 |===
 
 ****
 
 ****
-.All Exam solutions that will be implemented
+
+.Solution Exams to implement
 [%header,cols=2]
 |===
 |Description
 |Stack
 |A media company is setting up an ECS batch architecture for its image processing application. It will be hosted in an Amazon ECS Cluster with two ECS tasks that will handle image uploads from the users and image processing. The first ECS task will process the user requests, store the image in an S3 input bucket, and push a message to a queue. The second task reads from the queue, parses the message containing the object name, and then downloads the object. Once the image is processed and transformed, it will upload the objects to the S3 output bucket. To complete the architecture, the Solutions Architect must create a queue and the necessary IAM permissions for the ECS tasks.
-|Quarkus, Camel and TF to launch a new SQS queue, configuring a seconds ECS Task to read from it, IAM roles with ECS Task can assume in order to get access S3 buckets with taskRoleArn
+|Quarkus, Camel and TF to launch a new SQS queue, configuring a seconds ECS Task to read from it, IAM roles with ECS Task can assume to get access S3 buckets with taskRoleArn
 |===
 ****
 
@@ -45,7 +52,6 @@ Control list of Exams
 Marek Exam 2 (attempt x)
 Davis Exam 2 (attempt x)
 Bonso  Exam 2 (attempt x)
-
 
 === Classic Solutions Architecture
 
@@ -1043,10 +1049,10 @@ It's integrated with AWS Lambda so that you create triggers that automatically r
 
 === AWS Organization
 
-* Allows consolidating multiple AWS accounts into an organization, includes root accounts and organizations units
+* Allows consolidating multiple AWS accounts into an organization, including root accounts and organization units
 * Police are applied to tp root accounts or OUs
 
-* Consolidated accounts contain, paying accounts (independent and cannot resources of other accounts) / linked accounts - all linked accounts are independent
+* Consolidated accounts contain, paying accounts (independent and cannot resources of other accounts) / linked accounts—all linked accounts are independent
 
 === #*!!! Virtual Private Cloud (VPC) !!!*#
 
@@ -1410,5 +1416,6 @@ image::../thumbs/images/ddos-resilient-ref-arch.png[]
 * GuardDuty is an ML applying algorithms to protect AWS accounts
 
 
-
+.Networking Cost
+image::
 
