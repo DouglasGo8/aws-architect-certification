@@ -35,6 +35,11 @@ Configure an IAM role and an IAM Policy to access the bucket
 
 As a solutions architect, which of the following traffic distribution outcomes would you identify as correct
 |With cross-zone load balancing enabled, *one instance in AZ A receives 20% traffic* and *four* instances in AZ B receive 20% traffic each. With cross-zone load balancing disabled, one instance in AZ A receives 50% and four instances in AZ B receive 12.5% traffic each
+
+|An application is using a Lambda function to process complex financial data that run for 15 minutes on average. Most invocations were successfully processed. However, you noticed that there are a few terminated invocations throughout the day, which caused data discrepancy in the application.
+
+Which of the following is the most likely cause of this issue?
+|The failed lambda functions have been running for over 15 minutes and reached the maximum execution time
 |===
 
 ****
@@ -58,10 +63,6 @@ The company wants the AWS solution to process incoming data files as soon as the
 Which solution will meet these requirements in the MOST operationally efficient way?
 |Uses AWS Transfer Family to create a SFTP server to store incoming files in S3 Standard, create an AWS Lambda function to process the files and to delete the files after they are processed. Use S3 event notification to invoke the lambda function when the files arrive
 
-|An application is using a Lambda function to process complex financial data that run for 15 minutes on average. Most invocations were successfully processed. However, you noticed that there are a few terminated invocations throughout the day, which caused data discrepancy in the application.
-
-Which of the following is the most likely cause of this issue?
-|The failed lambda functions have been running for over 15 minutes and reached the maximum execution time
 
 |===
 ****
