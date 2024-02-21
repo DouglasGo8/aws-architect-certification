@@ -1,4 +1,4 @@
-= AWS Architect Associate
+= AWS Architect Associate Training
 
 == Links
 
@@ -31,6 +31,10 @@ The instance has failed the ELB health check status
 Which of the following will you need to consider so you can set up a solution that incorporates a single sign-on feature from your corporate AD or LDAP directory and also restricts access for each individual user to a designated user folder in an S3 bucket
 |Set up a Federation proxy or and Identity Provider, and use AWS STS to generate temporary tokens
 Configure an IAM role and an IAM Policy to access the bucket
+|An e-commerce company is using Elastic Load Balancing (ELB) for its fleet of Amazon EC2 instances spread across two Availability Zones (AZs), with one instance as a target in Availability Zone A and four instances as targets in Availability Zone B. The company is doing benchmarking for server performance when cross-zone load balancing is enabled compared to the case when cross-zone load balancing is disabled.
+
+As a solutions architect, which of the following traffic distribution outcomes would you identify as correct
+|With cross-zone load balancing enabled, *one instance in AZ A receives 20% traffic* and *four* instances in AZ B receive 20% traffic each. With cross-zone load balancing disabled, one instance in AZ A receives 50% and four instances in AZ B receive 12.5% traffic each
 |===
 
 ****
@@ -42,16 +46,34 @@ Configure an IAM role and an IAM Policy to access the bucket
 |===
 |Description
 |Stack
+
 |A media company is setting up an ECS batch architecture for its image processing application. It will be hosted in an Amazon ECS Cluster with two ECS tasks that will handle image uploads from the users and image processing. The first ECS task will process the user requests, store the image in an S3 input bucket, and push a message to a queue. The second task reads from the queue, parses the message containing the object name, and then downloads the object. Once the image is processed and transformed, it will upload the objects to the S3 output bucket. To complete the architecture, the Solutions Architect must create a queue and the necessary IAM permissions for the ECS tasks.
+
 |Quarkus, Camel and TF to launch a new SQS queue, configuring a seconds ECS Task to read from it, IAM roles with ECS Task can assume to get access S3 buckets with taskRoleArn
+
+|A healthcare company is migrating its patient record system to AWS. The company receives thousands of encrypted patient data files every day through FTP. An on-premises server processes the data files twice a day. However, the processing job takes hours to finish.
+
+The company wants the AWS solution to process incoming data files as soon as they arrive with minimal changes to the FTP clients that send the files. The solution must delete the incoming data files after the files have been processed successfully. Processing for each file needs to take around 10 minutes.
+
+Which solution will meet these requirements in the MOST operationally efficient way?
+|Uses AWS Transfer Family to create a SFTP server to store incoming files in S3 Standard, create an AWS Lambda function to process the files and to delete the files after they are processed. Use S3 event notification to invoke the lambda function when the files arrive
+
+|An application is using a Lambda function to process complex financial data that run for 15 minutes on average. Most invocations were successfully processed. However, you noticed that there are a few terminated invocations throughout the day, which caused data discrepancy in the application.
+
+Which of the following is the most likely cause of this issue?
+|The failed lambda functions have been running for over 15 minutes and reached the maximum execution time
+
 |===
 ****
 
-Control list of Exams
+.progress Exam Questions
+****
+Marek Exam 1 (attempt => ?)
 
-Marek Exam 2 (attempt x)
-Davis Exam 2 (attempt x)
-Bonso  Exam 2 (attempt x)
+Davis Exam 1 (attempt => ?)
+
+Bonso Exam 1 (attempt => ?)
+****
 
 === Classic Solutions Architecture
 
@@ -120,7 +142,7 @@ image::../thumbs/images/aws_history_timeline.png[]
 
 === IAM & Fundamentals
 
-* IAM (_Identity and Access Management_) is as global service, identities can be classified as humans and non-humans, it is service get authenticated and authorized to acess resources
+* IAM (_Identity and Access Management_) is as global service, identities can be classified as humans and non-humans, it is service get authenticated and authorized to access resources
 
 * Root account created by default, but never ever should be used or shared
 
@@ -437,7 +459,7 @@ image::../thumbs/images/theIAMRole.png[]
 |Database with per-socket licensing
 |===
 
-=== Private vs Public Network (IPv4)
+=== Private vs. Public Network (IPv4)
 
 * Networking in AWS can define IPs over IPv4 and/or IPv6; IPv4 _1.160.10.240_ - IPv6 _3ff3:1900:4545:3:200:f8ff:fe21:67c7_
 
@@ -497,6 +519,13 @@ image::../thumbs/images/AWS_ENI_Concept.png[ENI,200,100,role=right]
 ** iol/io2 (SSD) highest-performance SSD volume
 ** stl (HDD) low cost HDD volume
 ** scl (HDD) the lowest cost using HDD, used to be less frequently accessed
+
+** SSD-backed volumes optimized for transactional workloads involving frequent read/write operations with small I/O size, where the dominant performance attribute is IOPS
+
+** HDD-backed volumes optimized for large streaming workloads where throughput (measured in MiB/s) is a better performance measure than IOPS
+
+** Provision IOPS type supports critical business applications that require sustained IOPS performance, or more than 16,000 IOPS or 250 MiB/s of throughput per volume. Examples are large database workloads, such as: MongoDB Cassandra Microsoft SQL Server MySQL PostgreSQL Oracle
+
 
 * EBS Multi-attach over iol/io2 family *is possible to attach the same EBS volume to multiple EC2 instances in the same AZ*
 
@@ -816,6 +845,38 @@ User data
 
 ==== Route 53
 
+.Route 53 Capabilities
+[%header,cols=2*]
+|===
+|Routing Policy
+|What it does
+
+|Simple
+|Simple DNS response providing the IP address associated with a name
+
+|Failover
+|If primary is down (based health checks), routes to secondary destination
+
+|Geolocation
+|Uses geographic location you're in (e.g Europe) to route you to the closest region
+
+|Geoproximity
+|Routes you to the closest region within a geographic area
+
+|Latency
+|Directs you based on the lowest latency route to resources
+
+|Multi-value answer
+|Returns several IP addresses and functions as a basic load balancer
+
+|Weighted
+|Uses the relative weights assigned to resources to determine which to route to
+
+|IP-Based
+|Uses the IP addresses of clients to make routing decisions
+
+|===
+
 * DNS (domain name system) basically can be classified as friendly hostname into the machine _IP_address;_ e.g.; _"google.com => 172.217.18.36"_, dns is the backbone of the Internet
 * Domain Registrar: Amazon Route 53, GoDaddy etc, can be classified in Records A, AAAA, CNAME, NS etc. stored in zone files, classified also as top level domain such as, .com, .us, .in, .gov etc, secondary level such as amazon.com, https://www.redhat.com/en as bellow demonstrated
 
@@ -865,7 +926,7 @@ resource "aws_route53_record" "www" {
 
 * CNAME vs Alias to aws resources (ALB, Cloud front) exposes an AWS hostname, cname allows us to point to a hostname, but only for *NON-ROOT DOMAIN*, for alias options we can point to a hostname to an aws resource, works for both root and non-root domain and automatically recognizes changes in the resource's IP addresses
 
-* Route53 queries is not the same as ALB routing the traffic, DNS doesn't rout any traffic, it only responds to the DNS queries, if multiple values were specified in the same record, a random address will be chose
+* Route53 queries is not the same as ALB routing the traffic, DNS doesn't rout any traffic, it only responds to the DNS queries, if multiple values were specified in the same record, a random address will be chosen
 
 === Decoupling Apps with Messaging
 
@@ -1352,9 +1413,9 @@ image::../thumbs/images/S3ObjectLambda.png[]
 
 === AWS Security
 
-* Encryption/Decryption in flight (TLS/SSL), ensures no MITM (man on the middle) can stolen the data
-* Server-side encryption at rest, means data is encrypted after being received by the server,
-** Data is decrypted before being sent, and stored in a encrypted form thanks to a key
+* Encryption/Decryption in flight (TLS/SSL), ensures no MITM (man on the middle) can steal the data
+* Server-side encryption at rest means data is encrypted after being received by the server,
+** Data is decrypted before being sent, and stored in an encrypted form thanks to a key
 ** The encryption/decryption keys must be managed for somewhere
 * Client-side encryption, means that the data is encrypted by the client and never decrypted by the server
 ** Data will be decrypted by a receiving client
@@ -1391,7 +1452,7 @@ aws kms decrypt --key-id --ciphertext-blob fileb://encrypted_secretFile --output
 
 * AWS Certificate Manager (ACM) can easily provide management and deployment over TLS certificates, providing in-flight encryption for websites (HTTPS), support both private and public certificates, and integrated with CLB, ALB and NLB, but not with EC2 (cannot be extracted)
 
-* To request public certificates we need list the domain names that must be included in the certificate, such as FQDN (corp.sample.com) or Wild Domain (*.example.com)
+* To request public certificates we need, list the domain names that must be included in the certificate, such as FQDN (corp.sample.com) or Wild Domain (*.example.com)
 
 * We can use AWS config to manage the rule named _acm-certificate-expiration-check_ to check for expiring certificates. If any certificate is deemed not compliant it will be sent to EventBridge that can trigger one of those services SQS, SNS or Lambda
 
@@ -1408,7 +1469,7 @@ image::../thumbs/images/ddos-resilient-ref-arch.png[]
 
 * Use managed rules on WAF to block attacks based on an IP reputation, or block anonymous IPs
 
-* Cloudfront can block specific geographics
+* Cloudfront can block specific geographic
 
 * Shield in advanced scenarios automatic app layer DDoS mitigation automatically creates, evaluates and deploys AWS WAF rules, to mitigate layer 7 attacks
 
@@ -1417,5 +1478,49 @@ image::../thumbs/images/ddos-resilient-ref-arch.png[]
 
 
 .Networking Cost
-image::
+//image::
+
+
+=== Disaster Recovery
+
+* Any event that has a negative impact on business continuity or a company's finances is a disaster, disaster recovery (DR) consists of preparing for and recovering from a disaster, we have DR on-premises (very expensive) or on-premises to cloud with hybrid recovery or everything in the cloud can be moved between regions
+
+** RPO: Recovery Point Objective,
+** RTO: Recovery Time Objective
+
+==== Disaster Strategies
+
+* Backup and Restore: HIGH RPO can be used by a Storage Gateway/Snowball with S3 and Glacier
+* Pilot Light: Small version of the app, always running in the cloud; used for critical core, faster than backup and restore as critical systems are already up,
+* Warm Standby: full system up and running, but with minimum size, we can scale to production load
+* Hot Site Multi Site Approach: Very low RTO (minutes or seconds), too expensive, for full production scale when running in AWS and On Premise
+
+.Disaster Recovery Exam Tips
+****
+
+* Backup
+** EBS Snapshots, RDS automated backups / Snapshots etc
+** Regular pushes S3 / S3 IA / Glacier, Lifecycle Policy, Cross Region Replication
+** From On-Premise: Snowball or Storage Gateway
+
+* High Availability
+** Use Route53 to migrate DNS over from Region to Region
+** RDS Multi-AZ, Elastic-Cache Multi-AZ, EFS, S3
+** Site-to-Site VPN as a recovery from Direct Connection
+
+* Replication
+** RDS Replication (Cross Origin), AWS Aurora + Global Databases
+** Data base replication from on-premises to RDS
+** Storage Gateway
+
+* Automation
+** Cloudformation / ELB to re-create a whole new environment
+** Recover / Reboot EC2 instances with CloudWatch if alarms fail
+** AWS lambda functions for customized automations
+
+****
+
+.Caching Strategy Solution to be applied
+image::../thumbs/images/caching_strategies.png[]
+
 
