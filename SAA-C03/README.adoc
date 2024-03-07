@@ -8,7 +8,7 @@
 
 ****
 
-.Practice Exams
+.Some Peculiar Exam Questions and their bizzare answers
 [%header,cols=2*]
 |===
 |Question
@@ -33,13 +33,24 @@ Which of the following will you need to consider so you can set up a solution th
 Configure an IAM role and an IAM Policy to access the bucket
 |An e-commerce company is using Elastic Load Balancing (ELB) for its fleet of Amazon EC2 instances spread across two Availability Zones (AZs), with one instance as a target in Availability Zone A and four instances as targets in Availability Zone B. The company is doing benchmarking for server performance when cross-zone load balancing is enabled compared to the case when cross-zone load balancing is disabled.
 
-As a solutions architect, which of the following traffic distribution outcomes would you identify as correct
+As a solution architect, which of the following traffic distribution outcomes would you identify as correct
 |With cross-zone load balancing enabled, *one instance in AZ A receives 20% traffic* and *four* instances in AZ B receive 20% traffic each. With cross-zone load balancing disabled, one instance in AZ A receives 50% and four instances in AZ B receive 12.5% traffic each
 
 |An application is using a Lambda function to process complex financial data that run for 15 minutes on average. Most invocations were successfully processed. However, you noticed that there are a few terminated invocations throughout the day, which caused data discrepancy in the application.
 
 Which of the following is the most likely cause of this issue?
 |The failed lambda functions have been running for over 15 minutes and reached the maximum execution time
+
+|A company has deployed a new website on Amazon EC2 instances behind an Application Load Balancer (ALB). Amazon Route 53 is used for the DNS service. The company has asked a Solution Architect to create a backup website with support contact details that users will be directed to automatically if the primary website is down.
+
+How should the Solution Architect deploy this solution cost-effectively?
+|Configure a static website using S3 and create Route 53 failover routing policy
+
+|A company has a High Performance Computing (HPC) cluster that is composed of EC2 Instances with Provisioned IOPS (io1) volume to process transaction-intensive, low-latency workloads. The Solutions Architect must maintain high IOPS while keeping the latency down by setting the optimal queue length for the volume. The size of each volume is 10 GiB.
+|Which of the following is the MOST suitable configuration that the Architect should set up?
+A 10 GiB volume can be provisioned with up to 500 IOPS. Any volume 640 GiB in size or greater allows provisioning up to a maximum of 32,000 IOPS (50 × 640 GiB = 32,000). Hence, the correct answer is to set the IOPS to 500 then maintain a low queue length.
+
+
 |===
 
 ****
@@ -54,7 +65,7 @@ Which of the following is the most likely cause of this issue?
 
 |A media company is setting up an ECS batch architecture for its image processing application. It will be hosted in an Amazon ECS Cluster with two ECS tasks that will handle image uploads from the users and image processing. The first ECS task will process the user requests, store the image in an S3 input bucket, and push a message to a queue. The second task reads from the queue, parses the message containing the object name, and then downloads the object. Once the image is processed and transformed, it will upload the objects to the S3 output bucket. To complete the architecture, the Solutions Architect must create a queue and the necessary IAM permissions for the ECS tasks.
 
-|Quarkus, Camel and TF to launch a new SQS queue, configuring a seconds ECS Task to read from it, IAM roles with ECS Task can assume to get access S3 buckets with taskRoleArn
+|Quarkus, Camel and TF to launch a new SQS queue, configuring a seconds ECS Task to read from it, IAM roles with ECS Task can assume to get access to S3 buckets with taskRoleArn
 
 |A healthcare company is migrating its patient record system to AWS. The company receives thousands of encrypted patient data files every day through FTP. An on-premises server processes the data files twice a day. However, the processing job takes hours to finish.
 
@@ -63,17 +74,16 @@ The company wants the AWS solution to process incoming data files as soon as the
 Which solution will meet these requirements in the MOST operationally efficient way?
 |Uses AWS Transfer Family to create a SFTP server to store incoming files in S3 Standard, create an AWS Lambda function to process the files and to delete the files after they are processed. Use S3 event notification to invoke the lambda function when the files arrive
 
-
 |===
 ****
 
-.progress Exam Questions
+.Progress Exam Questions
 ****
-Marek Exam 1 (attempt => ?)
+Marek Exam 5 (attempt => ?)
 
-Davis Exam 1 (attempt => ?)
+Davis Exam 5 (attempt => ?)
 
-Bonso Exam 1 (attempt => ?)
+Bonso Exam 5 (attempt => ?)
 ****
 
 === Classic Solutions Architecture
@@ -506,6 +516,9 @@ image::../thumbs/images/AWS_ENI_Concept.png[ENI,200,100,role=right]
 
 * EBS (Elastic block storage) volume is a *network drive* you can attach to your instances; it allows us to persist the data even after the instance terminates they can be mounted just to one instance at a time, *_they are bound to a specific availability zone_*, that means it cannot be attached in different zones
 
+.Block, Object and File Storage concepts
+image::../thumbs/images/BlockFile_ObjectStorage.png[]
+
 * We can attach two different EBS Volumes attached at the same instance
 
 * They are locked to an Availability Zone (AZ), e.g.; an _EBS_ volume in _us-east-1a_ cannot be attached to _us-east-1b_
@@ -525,8 +538,7 @@ image::../thumbs/images/AWS_ENI_Concept.png[ENI,200,100,role=right]
 
 ** HDD-backed volumes optimized for large streaming workloads where throughput (measured in MiB/s) is a better performance measure than IOPS
 
-** Provision IOPS type supports critical business applications that require sustained IOPS performance, or more than 16,000 IOPS or 250 MiB/s of throughput per volume. Examples are large database workloads, such as: MongoDB Cassandra Microsoft SQL Server MySQL PostgreSQL Oracle
-
+** Provision IOPS type supports critical business applications that require sustained IOPS performance, or more than 16,000 IOPS or 250 MiB/s of throughput per volume. Examples are large database workloads, such as MongoDB Cassandra Microsoft SQL Server MySQL PostgreSQL Oracle
 
 * EBS Multi-attach over iol/io2 family *is possible to attach the same EBS volume to multiple EC2 instances in the same AZ*
 
@@ -792,6 +804,7 @@ Of cpu
 ****
 AMI and Instance type
 
+Golden Amazon Machine Image (AMI) (Elastic Beanstalk) - A Golden AMI is an AMI that you standardize through configuration, consistent security patching, and hardening. It also contains agents you approve for loggi`1ng, security, performance monitoring, etc. For the given use-case, you can have the static installation components already setup via the golden AMI.
 
 EBS Volume
 
@@ -929,6 +942,8 @@ resource "aws_route53_record" "www" {
 
 * Route53 queries is not the same as ALB routing the traffic, DNS doesn't rout any traffic, it only responds to the DNS queries, if multiple values were specified in the same record, a random address will be chosen
 
+* Route 53 health checking can be used to configure active-active and active-passive failover configurations. You configure active-active failover using any routing policy (or combination of routing policies) other than failover, and you configure active-passive failover using the failover routing policy.
+
 === Decoupling Apps with Messaging
 
 ==== SQS
@@ -1027,10 +1042,29 @@ image::../thumbs/images/ECSTaskEventBrigdeUploadFileSolution.png[]
 ==== Lambda Limits - per Region
 
 * Memory allocation 128MB up to 10GB (1MB increments)
+
 * Maximum execution time 900 seconds (15Min)
+
 * Env Variables up to 4KB
+
 * Disk capacity in the "function container" (in /tmp) 512 to 10GB
+
 * Concurrency executions: 1000 p/s (can be increased)
+
+* Lambda@Edge run Node.js and Python lambda functions to customize the content Cloudfront delivers
+
+* Executes functions closer to the viwer
+
+* Can be run at the following points
+
+
+==== Global Accelarator
+
+* Is a networking service that allows you to utilize Global Network to send data to your apps
+
+* Over AWS network means you're avoiding the internet for a large part of the data transfer
+
+
 
 .CloudFront Functions vs Lambda@Edge - Use Cases
 [%header,cols=2*]
@@ -1096,6 +1130,14 @@ It's integrated with AWS Lambda so that you create triggers that automatically r
 * AWS Glue is an ETL managed Service useful to prepare and transform data for analytics
 
 === Monitoring & Audit with CloudWatch and CloudTrail
+
+* Here's the list of custom metrics that you can set up:
+
+- Memory utilization
+- Disk swap utilization
+- Disk space utilization
+- Page file utilization
+- Log collection
 
 * Cloudwatch provides metrics for *EVERY* service in AWS
 
@@ -1462,7 +1504,19 @@ aws kms decrypt --key-id --ciphertext-blob fileb://encrypted_secretFile --output
 .DDoS Best Practices
 image::../thumbs/images/ddos-resilient-ref-arch.png[]
 
+* Cloudfront origin are literally the origin of where the content is coming from, spread out between S3 or EC2
+
+* Edge Locations are actually all over world, And there's hundreds of edge locations located in different part of world
+
 * Cloudfront cache static content and serve it from serve it from edge locations, protecting your backend
+
+.Cloundfront SumUp
+****
+. Speed up distribution of static dynamic content, for example, .html, .css, .php and graphic files
+. Distribute media files using HTTP or HTTPs
+. Add, update or delete objects and submit data from web forms
+. Use live streaming to stream an event in real time
+****
 
 * AWS WAF is used on top of Cloudfront and Application Load Balancer to filter and block requests based on request signatures
 
@@ -1474,9 +1528,12 @@ image::../thumbs/images/ddos-resilient-ref-arch.png[]
 
 * Shield in advanced scenarios automatic app layer DDoS mitigation automatically creates, evaluates and deploys AWS WAF rules, to mitigate layer 7 attacks
 
-
 * GuardDuty is an ML applying algorithms to protect AWS accounts
 
+* Cloudfront can Use a origin group with primary and secondary point origins to config Cloudfron for high-availability and failover
+
+* AWS Cloudfront can route to multiple origins based on the content type
+* AWS Cloudfront use field level encryption to protect sensitive data for spec content
 
 .Networking Cost
 //image::
@@ -1492,9 +1549,13 @@ image::../thumbs/images/ddos-resilient-ref-arch.png[]
 ==== Disaster Strategies
 
 * Backup and Restore: HIGH RPO can be used by a Storage Gateway/Snowball with S3 and Glacier
+
 * Pilot Light: Small version of the app, always running in the cloud; used for critical core, faster than backup and restore as critical systems are already up,
-* Warm Standby: full system up and running, but with minimum size, we can scale to production load
+
+* Warm Standby: full (functional enviroment) system up and running, but with minimum size, we can scale to production load
+
 * Hot Site Multi Site Approach: Very low RTO (minutes or seconds), too expensive, for full production scale when running in AWS and On Premise
+
 
 .Disaster Recovery Exam Tips
 ****
