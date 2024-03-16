@@ -50,6 +50,11 @@ How should the Solution Architect deploy this solution cost-effectively?
 |Which of the following is the MOST suitable configuration that the Architect should set up?
 A 10 GiB volume can be provisioned with up to 500 IOPS. Any volume 640 GiB in size or greater allows provisioning up to a maximum of 32,000 IOPS (50 × 640 GiB = 32,000). Hence, the correct answer is to set the IOPS to 500 then maintain a low queue length.
 
+|A government agency plans to store confidential tax documents on AWS. Due to the sensitive information in the files, the Solutions Architect must restrict the data access requests made to the storage solution to a specific Amazon VPC only. The solution should also prevent the files from being deleted or overwritten to meet the regulatory requirement of having a write-once-read-many (WORM) storage model.
+
+Which combination of the following options should the Architect implement? (Select TWO.)
+
+|Configure an S3 Access Point for the S3 bucket to restrict Access Point for the S3 bucket to restrict data access to a particular VPC, and creates a S3 bucket with S3 Object Lock feat. enabled, to store the documents in the bucket and set the Legal Hold options for object retention
 
 |===
 
@@ -75,15 +80,16 @@ Which solution will meet these requirements in the MOST operationally efficient 
 |Uses AWS Transfer Family to create a SFTP server to store incoming files in S3 Standard, create an AWS Lambda function to process the files and to delete the files after they are processed. Use S3 event notification to invoke the lambda function when the files arrive
 
 |===
+
 ****
 
 .Progress Exam Questions
 ****
-Marek Exam 5 (attempt => ?)
+Marek Exam 1 (attempt => ?)
 
-Davis Exam 5 (attempt => ?)
+Davis Exam 1 (attempt => ?)
 
-Bonso Exam 5 (attempt => ?)
+Bonso Exam 1 (attempt => ?)
 ****
 
 === Classic Solutions Architecture
@@ -98,11 +104,17 @@ image::../thumbs/images/saa_certificate_solutions-myclothes.app.png[]
 
 ****
 . First Solution
+
 * Expose as REST API with HTTPS
+
 * Serverless Architecture
+
 * Users should be able to directly interact with their own folder in S3
+
 * Users should authenticate through a managed serverless service
+
 * The users can write and read to-dos, but they mostly read them
+
 * The database should scale and have some high-read throughput
 
 .. Solution can be composed by AWS Gateway, (Cognito or RHSSO Keycloak En), Lambda and DynamoDB
@@ -242,7 +254,7 @@ arn:aws:iam:855174569821:user/dougdb
   "Principal": {
     "Service": "ec2.amazonaws.com"
   },
-  "Action": "sts:AssumeRole "
+  "Action": "sts:AssumeRole"
 }
 ----
 
@@ -1478,6 +1490,7 @@ image::../thumbs/images/KMS_Snapshot_across_region.drawio.png[]
 ** Can download the public key, but *never* the private key
 * Types of Keys
 ** AWS Owned keys (SSE-S3, SSE-SQS,SSE-DDB) (default-key)
+*** S3 managed keys (SSE-S3), each object is encrypted with a unique key
 ** AWS Managed key (aws/service-name e.g: aws/ebs)
 
 .KMS encrypt/decrypt usage sample
@@ -1586,3 +1599,12 @@ image::../thumbs/images/ddos-resilient-ref-arch.png[]
 image::../thumbs/images/caching_strategies.png[]
 
 
+=== AI/ML Tips
+
+* Amazon Lex enables you to build applications using a speech or text interface powered by the same technology that powers Amazon Alexa,enables any developer to build conversational chatbots quickly. With Amazon Lex, no deep learning expertise is necessary
+
+* Amazon Comprehend is a natural language processing (NLP) service that uses machine learning to find insights and relationships in texts
+
+* Amazon Polly converts text into lifelike speech. It is designed for text-to-speech applications
+
+* Amazon Rekognition is used to identify objects, people, text, scenes, and activities in images and videos
